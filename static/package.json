@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "tailwindcss -i ./static/src/input.css -o ./static/dist/styles.css --watch --poll"
+    "dev": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch --poll"
   },
   "devDependencies": {
     "tailwindcss": "^4.1.0",
