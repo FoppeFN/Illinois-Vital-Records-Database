@@ -1,0 +1,10 @@
+__pycache__/
+*.__pycache__
+db.sqlite3
+staticfiles/
+.env
+node_modules/
+static/dist/
+.vscode/
+.DS_Store
+Thumbs.db

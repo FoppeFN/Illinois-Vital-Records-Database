@@ -1,0 +1,7 @@
+__pycache__/
+*.__pycache__
+.env
+.git
+.gitignore
+node_modules/
+static/dist/
