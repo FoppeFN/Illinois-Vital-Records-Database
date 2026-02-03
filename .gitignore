@@ -1,4 +1,8 @@
 __pycache__/
+<<<<<<< HEAD
+=======
+*.__pycache__
+>>>>>>> origin/Nicks-Branch
 *.pyc
 db.sqlite3
 .env
