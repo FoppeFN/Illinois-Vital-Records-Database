@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="text-5xl font-bold text-center text-forest-green mb-12">
+        Search Marriage Records
+    </h1>
+
+<div class="flex justify-center items-center mb-10 font-semibold">
+    <a href="{% url 'search_birth_records' %}" class="text-forest-green px-6 py-3 hover:text-green-700 transition">
+        BIRTH RECORDS
+    </a>
+    <a href="{% url 'search_death_records' %}" class="text-forest-green px-6 py-3 hover:text-green-700 transition">
+        DEATH RECORDS
+    </a>
+    <a href="#" class="bg-forest-green text-white px-6 py-3 rounded-r-full">
+        MARRIAGE RECORDS
+    </a>
+</div>
+
+<form hx-get="{% url 'search_marriage_records' %}" hx-target="#search-results" hx-swap="innerHTML">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-12">
+        <div class="space-y-6">
+            <div>
+                <label for="groom_last_name" class="block text-forest-green font-bold mb-2">
+                    Groom's Last Name
+                </label>
+                <input type="text" id="groom_last_name" name="groom_last_name"
+                    class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+            </div>
+            <div>
+                <label for="groom_first_name" class="block text-forest-green font-bold mb-2">
+                    Groom's First Name
+                </label>
+                <input type="text" id="groom_first_name" name="groom_first_name" 
+                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+            </div>
+            <div>
+                <label for="bride_last_name" class="block text-forest-green font-bold mb-2">
+                    Bride's Last Name
+                </label>
+                <input type="text" id="bride_last_name" name="bride_last_name" 
+                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+            </div>
+            <div>
+                <label for="bride_first_name" class="block text-forest-green font-bold mb-2">
+                    Bride's First Name
+                </label>
+                <input type="text" id="bride_first_name" name="bride_first_name" 
+                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green">
+            </div>
+        </div>
+        
+        <div class="space-y-6">
+            <div>
+                <label for="marriage_year" class="block text-forest-green font-bold mb-2">
+                    Year of Marriage
+                </label>
+                <input type="text" id="marriage_year" name="marriage_year" 
+                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+            </div>
+            <div>
+                <label for="county" class="block text-forest-green font-bold mb-2">
+                    County
+                </label>
+                <select id="county" name="county"
+                class="w-full bg-white border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+                    <option value="">All</option>
+                    <option value="madison">Madison</option>
+                    <option value="stclair">St. Clair</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-center">
+        <button type="submit"
+        class="bg-forest-green text-white px-16 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-[#0d4a46] transition">
+            SEARCH
+        </button>
+    </div>
+</form>
+
+<div id="search-results" class="mt-12">
+</div>
+
+{% endblock %}
