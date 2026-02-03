@@ -2,7 +2,7 @@ __pychache__/
 *.__pycache__
 db.sqlite3
 staticfiles/
-.env
+*.env
 node_modules/
 static/dist/
 .vscode/
