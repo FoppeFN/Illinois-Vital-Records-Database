@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from .utils import load_county_choices
 
@@ -11,6 +12,7 @@ COUNTIES = load_county_choices()
 class Sex(models.TextChoices):
     MALE = 'M', 'Male'
     FEMALE = 'F', 'Female'
+    UNKNOWN = 'U', 'Unknown'
 
 
 
@@ -83,6 +85,12 @@ class Birth(models.Model):
             'birth_county'
         ]
 
+    person = models.OneToOneField(
+        Person,
+        on_delete=models.CASCADE,
+        related_name="birth"
+    )
+
     birth_date = models.DateField(blank=True, null=True)
 
     birth_county = models.CharField(
@@ -90,6 +98,12 @@ class Birth(models.Model):
         choices = COUNTIES,    # grab counties from CSV
         blank=True,
         null=True
+    )
+
+    birth_city = models.CharField(
+        max_length = 50,
+        blank = True,
+        null = True
     )
 
     birth_record_image = models.ImageField(
@@ -113,13 +127,34 @@ class Death(models.Model):
             'death_county'
         ]
 
+    person = models.OneToOneField(
+        Person,
+        on_delete=models.CASCADE,
+        related_name="death"
+    )
+
     death_date = models.DateField(blank=True, null=True)
+
+    death_age = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(150),
+        ]
+    )
     
     death_county = models.CharField(
         max_length=3,
         choices = COUNTIES,    # grab counties from CSV
         blank=True,
         null=True
+    )
+
+    death_city = models.CharField(
+        max_length = 50,
+        blank = True,
+        null = True
     )
 
     death_record_image = models.ImageField(
@@ -164,9 +199,16 @@ class Marriage(models.Model):
         blank = True,
         null = True
     )
+
+    marriage_city = models.CharField(
+        max_length = 50,
+        blank = True,
+        null = True
+    )
+
     divorce_date = models.DateField(null=True, blank=True)
 
-    death_record_image = models.ImageField(
+    marriage_record_image = models.ImageField(
         upload_to = 'marriage_records/',
         blank = True,
         null = True
