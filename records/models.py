@@ -66,9 +66,32 @@ class Person(models.Model):
         return f"{self.first_name} {self.last_name}"
     
     # find children by obtaining all people with self as parent
-    @property
-    def children(self):
-        return Person.objects.filter(models.Q(mother=self) | models.Q(father=self))
+    def children(self, child_sex=None):
+        qs = Person.objects.filter(models.Q(mother=self) | models.Q(father=self))
+        if child_sex in Sex.values:
+            qs = qs.filter(sex=child_sex)
+        return qs
+    
+    def sons(self):
+        return self.children(Sex.MALE)
+    
+    def daughters(self):
+        return self.children(Sex.FEMALE)
+    
+    # find siblings by obtaining all people with same parent as self
+    def siblings(self, sibling_sex=None):
+        qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
+        if sibling_sex in Sex.values:
+            qs = qs.filter(sex=sibling_sex)
+        return qs
+    
+    def brothers(self):
+        return self.siblings(Sex.MALE)
+    
+    def sisters(self):
+        return self.siblings(Sex.FEMALE)
+    
+
     
 
 
