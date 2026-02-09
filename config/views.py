@@ -13,3 +13,10 @@ def search_death_records(request):
         return render(request, 'partials/search_results.html', context)
     else:
         return render(request, 'search_death.html')
+
+def search_marriage_records(request):
+    if request.htmx:
+        context = {'results': []}
+        return render(request, 'partials/search_results.html', context)
+    else:
+        return render(request, 'search_marriage.html')
