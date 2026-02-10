@@ -1,5 +1,6 @@
-Django>=5.2.8,<6.0
+Django==6.0
 django-htmx>=1.27.0
 psycopg[binary]>=3.1
 gunicorn>=21.2
 Faker==40.1.2
+Pillow==12.1.0
