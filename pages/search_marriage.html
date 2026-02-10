@@ -5,7 +5,7 @@
         Search Marriage Records
     </h1>
 
-<div class="flex justify-center items-center mb-10 font-semibold">
+<div class="flex justify-center items-center mb-6 font-semibold">
     <a href="{% url 'search_birth_records' %}" class="text-forest-green px-6 py-3 hover:text-green-700 transition">
         BIRTH RECORDS
     </a>
@@ -18,57 +18,157 @@
 </div>
 
 <form hx-get="{% url 'search_marriage_records' %}" hx-target="#search-results" hx-swap="innerHTML">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-12">
-        <div class="space-y-6">
-            <div>
-                <label for="groom_last_name" class="block text-forest-green font-bold mb-2">
-                    Groom's Last Name
-                </label>
-                <input type="text" id="groom_last_name" name="groom_last_name"
-                    class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
-            </div>
-            <div>
-                <label for="groom_first_name" class="block text-forest-green font-bold mb-2">
-                    Groom's First Name
-                </label>
-                <input type="text" id="groom_first_name" name="groom_first_name" 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-6">
+        <div>
+            <label for="groom_last_name" class="block text-forest-green font-bold mb-2">
+                Groom's Last Name
+            </label>
+            <input type="text" id="groom_last_name" name="groom_last_name"
                 class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
-            </div>
-            <div>
-                <label for="bride_last_name" class="block text-forest-green font-bold mb-2">
-                    Bride's Last Name
-                </label>
-                <input type="text" id="bride_last_name" name="bride_last_name" 
-                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
-            </div>
-            <div>
-                <label for="bride_first_name" class="block text-forest-green font-bold mb-2">
-                    Bride's First Name
-                </label>
-                <input type="text" id="bride_first_name" name="bride_first_name" 
-                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green">
-            </div>
+        </div>
+
+        <div>
+            <label for="bride_last_name" class="block text-forest-green font-bold mb-2">
+                Bride's Last Name
+            </label>
+            <input type="text" id="bride_last_name" name="bride_last_name" 
+            class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+        </div>
+
+        <div>
+            <label for="groom_first_name" class="block text-forest-green font-bold mb-2">
+                Groom's First Name
+            </label>
+            <input type="text" id="groom_first_name" name="groom_first_name" 
+            class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+        </div>
+
+        <div>
+            <label for="bride_first_name" class="block text-forest-green font-bold mb-2">
+                Bride's First Name
+            </label>
+            <input type="text" id="bride_first_name" name="bride_first_name" 
+            class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green">
         </div>
         
-        <div class="space-y-6">
-            <div>
-                <label for="marriage_year" class="block text-forest-green font-bold mb-2">
-                    Year of Marriage
-                </label>
-                <input type="text" id="marriage_year" name="marriage_year" 
-                class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
-            </div>
-            <div>
-                <label for="county" class="block text-forest-green font-bold mb-2">
-                    County
-                </label>
-                <select id="county" name="county"
-                class="w-full bg-white border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
-                    <option value="">All</option>
-                    <option value="madison">Madison</option>
-                    <option value="stclair">St. Clair</option>
-                </select>
-            </div>
+        <div>
+            <label for="marriage_year" class="block text-forest-green font-bold mb-2">
+                Year of Marriage
+            </label>
+            <input type="text" id="marriage_year" name="marriage_year" 
+            class="w-full border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+        </div>
+
+        <div>
+            <label for="county" class="block text-forest-green font-bold mb-2">
+                County
+            </label>
+            <select id="county" name="county"
+            class="w-full bg-white border-2 border-gray-300 rounded-md p-3 focus:outline-none focus:border-forest-green transition">
+                <option value="">All</option>
+                <option value="adams">Adams</option>
+                <option value="alexander">Alexander</option>
+                <option value="bond">Bond</option>
+                <option value="boone">Boone</option>
+                <option value="brown">Brown</option>
+                <option value="bureau">Bureau</option>
+                <option value="calhoun">Calhoun</option>
+                <option value="carroll">Carroll</option>
+                <option value="cass">Cass</option>
+                <option value="champaign">Champaign</option>
+                <option value="christian">Christian</option>
+                <option value="clark">Clark</option>
+                <option value="clay">Clay</option>
+                <option value="clinton">Clinton</option>
+                <option value="coles">Coles</option>
+                <option value="cook">Cook</option>
+                <option value="crawford">Crawford</option>
+                <option value="cumberland">Cumberland</option>
+                <option value="dekalb">DeKalb</option>
+                <option value="dewitt">DeWitt</option>
+                <option value="douglas">Douglas</option>
+                <option value="dupage">DuPage</option>
+                <option value="edgar">Edgar</option>
+                <option value="edwards">Edwards</option>
+                <option value="effingham">Effingham</option>
+                <option value="fayette">Fayette</option>
+                <option value="ford">Ford</option>
+                <option value="franklin">Franklin</option>
+                <option value="fulton">Fulton</option>
+                <option value="gallatin">Gallatin</option>
+                <option value="greene">Greene</option>
+                <option value="grundy">Grundy</option>
+                <option value="hamilton">Hamilton</option>
+                <option value="hancock">Hancock</option>
+                <option value="hardin">Hardin</option>
+                <option value="henderson">Henderson</option>
+                <option value="henry">Henry</option>
+                <option value="iroquois">Iroquois</option>
+                <option value="jackson">Jackson</option>
+                <option value="jasper">Jasper</option>
+                <option value="jefferson">Jefferson</option>
+                <option value="jersey">Jersey</option>
+                <option value="jodaviess">Jo Daviess</option>
+                <option value="johnson">Johnson</option>
+                <option value="kane">Kane</option>
+                <option value="kankakee">Kankakee</option>
+                <option value="kendall">Kendall</option>
+                <option value="knox">Knox</option>
+                <option value="lake">Lake</option>
+                <option value="lasalle">LaSalle</option>
+                <option value="lawrence">Lawrence</option>
+                <option value="lee">Lee</option>
+                <option value="livingston">Livingston</option>
+                <option value="logan">Logan</option>
+                <option value="macon">Macon</option>
+                <option value="macoupin">Macoupin</option>
+                <option value="madison">Madison</option>
+                <option value="marion">Marion</option>
+                <option value="marshall">Marshall</option>
+                <option value="mason">Mason</option>
+                <option value="massac">Massac</option>
+                <option value="mcdonough">McDonough</option>
+                <option value="mchenry">McHenry</option>
+                <option value="mclean">McLean</option>
+                <option value="menard">Menard</option>
+                <option value="mercer">Mercer</option>
+                <option value="monroe">Monroe</option>
+                <option value="montgomery">Montgomery</option>
+                <option value="morgan">Morgan</option>
+                <option value="moultrie">Moultrie</option>
+                <option value="ogle">Ogle</option>
+                <option value="peoria">Peoria</option>
+                <option value="perry">Perry</option>
+                <option value="piatt">Piatt</option>
+                <option value="pike">Pike</option>
+                <option value="pope">Pope</option>
+                <option value="pulaski">Pulaski</option>
+                <option value="putnam">Putnam</option>
+                <option value="randolph">Randolph</option>
+                <option value="richland">Richland</option>
+                <option value="rockisland">Rock Island</option>
+                <option value="saline">Saline</option>
+                <option value="sangamon">Sangamon</option>
+                <option value="schuyler">Schuyler</option>
+                <option value="scott">Scott</option>
+                <option value="shelby">Shelby</option>
+                <option value="stclair">St. Clair</option>
+                <option value="stark">Stark</option>
+                <option value="stephenson">Stephenson</option>
+                <option value="tazewell">Tazewell</option>
+                <option value="union">Union</option>
+                <option value="vermilion">Vermilion</option>
+                <option value="wabash">Wabash</option>
+                <option value="warren">Warren</option>
+                <option value="washington">Washington</option>
+                <option value="wayne">Wayne</option>
+                <option value="white">White</option>
+                <option value="whiteside">Whiteside</option>
+                <option value="will">Will</option>
+                <option value="williamson">Williamson</option>
+                <option value="winnebago">Winnebago</option>
+                <option value="woodford">Woodford</option>
+            </select>
         </div>
     </div>
 
@@ -80,7 +180,6 @@
     </div>
 </form>
 
-<div id="search-results" class="mt-12">
-</div>
+<div id="search-results" class="mt-12"></div>
 
 {% endblock %}
