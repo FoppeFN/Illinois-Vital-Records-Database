@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "tailwindcss -i ./src/input.css -o ./dist/styles.css --watch --poll"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/cli": "^4.1.0"
+  }
+}
