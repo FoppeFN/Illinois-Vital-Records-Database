@@ -1,4 +1,4 @@
-from faker import faker
+from faker import Faker
 import random
 
-faker = faker()
+faker = Faker()
