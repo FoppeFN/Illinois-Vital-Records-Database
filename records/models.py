@@ -2,7 +2,14 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
+from django.contrib.auth.models import User
 from .utils import load_county_choices
+
+
+#####################################
+#          PERSON TABLES            #
+#####################################
+
 
 COUNTIES = load_county_choices()
 
@@ -68,7 +75,7 @@ class Person(models.Model):
     # find children by obtaining all people with self as parent
     def children(self, child_sex=None):
         qs = Person.objects.filter(models.Q(mother=self) | models.Q(father=self))
-        if child_sex in Sex.values:
+        if child_sex:
             qs = qs.filter(sex=child_sex)
         return qs
     
@@ -81,7 +88,7 @@ class Person(models.Model):
     # find siblings by obtaining all people with same parent as self
     def siblings(self, sibling_sex=None):
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
-        if sibling_sex in Sex.values:
+        if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
         return qs
     
@@ -245,3 +252,27 @@ class Marriage(models.Model):
         if self.spouse2.id < self.spouse1.id:
             self.spouse1, self.spouse2 = self.spouse2, self.spouse1
         super().save(*args, **kwargs)
+
+
+
+#################################
+#         COMMENT MODELS        #
+#################################
+
+
+
+class Comment(models.Model):
+
+    # metadata
+    class Meta:
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+        ordering = ['-creation_time']
+
+    # comment content
+    comment_content = models.CharField(max_length=2000)
+    creation_time = models.DateTimeField()
+
+    # user optional content
+    commenter_name = models.CharField(max_length=100, blank=True, null=True)
+    commenter_email = models.CharField(max_length=100, blank=True, null=True)
