@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/
     ports:
       - "5432:5432"
   web:
@@ -20,8 +20,8 @@ services:
       - "8000:8000"
     command: >
       sh -c "
-        ./wait-for-postgres.sh python manage.py migrate &&
-        python manage.py runserver 0.0.0.0:8000
+      ./wait-for-postgres.sh python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000
       "
   tailwind:
     image: node:20-alpine
