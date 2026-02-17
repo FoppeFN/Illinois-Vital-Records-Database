@@ -1,0 +1,5 @@
+# Force LF for all text files in the repo
+* text=auto eol=lf
+
+# For scripts used in Docker/Linux
+*.sh text eol=lf
