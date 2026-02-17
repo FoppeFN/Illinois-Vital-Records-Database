@@ -21,8 +21,8 @@ MAX_CHILDREN = 10
 
 
 
-FTDL = 15                   # Family Tree Depth Limit
-SPDL = 15                   # Sibling-Partner Depth Limit
+FTDL = 5                   # Family Tree Depth Limit
+SPDL = 3                   # Sibling-Partner Depth Limit
 
 
 # -----------------------------
@@ -87,6 +87,12 @@ def pick_birth_date(seed, age_offset):
     return fake.date_between(start_date=start, end_date=end)
 
 
+def pick_marriage_date(seed):
+    start = seed + relativedelta(years=16)
+    end = seed + relativedelta(years=22)
+    return fake.date_between(start_date=start, end_date=end)
+
+
 def pick_county():
     """
     Random county selection (uniform).
@@ -121,13 +127,18 @@ def marry(p1, p2):
     marriage_id = spouse_list[0] + "," + spouse_list[1]
     marriage_county = pick_county()
     marriage_city = pick_city(marriage_county)
+    marriage_date = pick_marriage_date(people[p1]["birth_date"]).isoformat()
+
+    if people[p1]["sex"] == "F": people[p1]["last"] = people[p2]["last"]
+    if people[p2]["sex"] == "F": people[p2]["last"] = people[p1]["last"]
 
     if marriage_id not in marriages:
         marriages[marriage_id] = {
             "spouse1": p1,
             "spouse2": p2,
             "marriage_county": marriage_county,
-            "marriage_city": marriage_city 
+            "marriage_city": marriage_city,
+            "marriage_date": marriage_date
         }
     
 
@@ -235,6 +246,18 @@ def make_children(mom, dad, require_at_least_one=False):
     return kids
 
 
+def make_sibling_cluster(person):
+    person_info = people[person]
+
+    sibling_count = child_count(require_at_least_one=True) - 1
+    sibling_cluster = [person]
+
+    for _ in range(sibling_count):
+        sibling_cluster.append(make_person(last=person_info["last"], birth_seed=person_info["birth_date"]))
+    
+    return sibling_cluster
+
+
 def expand_from_cluster(cluster, depth, sp_depth):
     """
     Expands relationships starting from a CC (cluster of siblings).
@@ -265,6 +288,9 @@ def expand_from_cluster(cluster, depth, sp_depth):
         people[mom]["children"].append(child)
         people[dad]["children"].append(child)
 
+    mom_cluster = make_sibling_cluster(mom)
+    dad_cluster = make_sibling_cluster(dad)
+
     # For each sibling in CC(i), maybe partner + children
     for person in cluster:
         if people[person]["sex"] == "U":
@@ -287,8 +313,11 @@ def expand_from_cluster(cluster, depth, sp_depth):
         # SIBLINGS (SAME AGE)
         if sp_depth + 1 < SPDL:
             # make a tiny "partner sibling cluster" (partner + one sibling)
-            sib = make_person(birth_seed=birth_seed)
-            expand_from_cluster([partner, sib], depth, sp_depth + 1)
+            sibling_cluster = make_sibling_cluster(partner)
+            expand_from_cluster(sibling_cluster, depth, sp_depth + 1)
+
+    expand_from_cluster(mom_cluster, depth + 1, sp_depth)
+    expand_from_cluster(dad_cluster, depth + 1, sp_depth)
 
     """
     # Next generation: treat each child as a possible adult who forms their own family

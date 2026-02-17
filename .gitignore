@@ -9,3 +9,4 @@ static/dist/
 .vscode/
 .DS_Store
 Thumbs.db
+family_tree.json
