@@ -8,6 +8,7 @@ from utils import load_county_choices, load_city_choices
 from pathlib import Path
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from argparse import ArgumentParser
 
 fake = Faker()
 
@@ -21,7 +22,7 @@ MAX_CHILDREN = 10
 
 
 
-FTDL = 5                   # Family Tree Depth Limit
+FTDL = 6                   # Family Tree Depth Limit
 SPDL = 3                   # Sibling-Partner Depth Limit
 
 
@@ -140,6 +141,8 @@ def marry(p1, p2):
             "marriage_city": marriage_city,
             "marriage_date": marriage_date
         }
+        people[p1]["is_married"] = True
+        people[p2]["is_married"] = True
     
 
 # -----------------------------
@@ -164,10 +167,13 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
 
     if sex == "M":
         first = fake.first_name_male()
+        middle = fake.first_name_male()
     elif sex == "F":
         first = fake.first_name_female()
+        middle = fake.first_name_female()
     else:
         first = fake.first_name()
+        middle = fake.first_name()
 
     pid = new_id()
     last = last or fake.last_name()
@@ -185,6 +191,7 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
     people[pid] = {
         "id": pid,
         "first": first,
+        "middle": middle,
         "last": last,
         "sex": sex,
 
@@ -206,6 +213,8 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
         "death_date": death_date,
         "age": age,
 
+        #marriage
+        "is_married": False,
 
         # parents
         "mother": None,
@@ -262,14 +271,12 @@ def expand_from_cluster(cluster, depth, sp_depth):
     """
     Expands relationships starting from a CC (cluster of siblings).
     Stops at FTDL and SPDL.
-
-    Simplified version of your plan:
-    - Create parents for this cluster
-    - For each person in cluster: PCP chance they have partner+kids
-    - Optionally expand partner siblings until SPDL
-    - Optionally create "next generation" families for children until FTDL
     """
+
     if depth >= FTDL:
+        return
+    
+    if len(cluster) < 1:
         return
 
     # Create parents for this CC(i)
@@ -293,6 +300,8 @@ def expand_from_cluster(cluster, depth, sp_depth):
 
     # For each sibling in CC(i), maybe partner + children
     for person in cluster:
+        if people[person]["is_married"]:
+            continue
         if people[person]["sex"] == "U":
             continue  # unknown sex rule: no PC / no children
         if random.random() > PCP:
@@ -319,34 +328,18 @@ def expand_from_cluster(cluster, depth, sp_depth):
     expand_from_cluster(mom_cluster, depth + 1, sp_depth)
     expand_from_cluster(dad_cluster, depth + 1, sp_depth)
 
-    """
-    # Next generation: treat each child as a possible adult who forms their own family
-    for child in cluster:
-        if people[child]["sex"] == "U":
-            continue
-        if random.random() < PCP:
-            partner_sex = "F" if people[child]["sex"] == "M" else "M"
-            # SPOUSE (SAME AGE)
-            spouse = make_person(sex=partner_sex)
-            marry(child, spouse)
-
-            m = child if people[child]["sex"] == "F" else spouse
-            d = child if people[child]["sex"] == "M" else spouse
-            # CHILDREN (YOUNGER AGE)
-            child_cluster = make_children(m, d, require_at_least_one=False)
-            if child_cluster:
-                expand_from_cluster(child_cluster, depth + 1, 0)
-    """
-
 
 def generate():
     """
     Step 1: initial CC(i)-f
     """
+    # fake parents not used in family tree. just for seeding ===
     mom = make_person(sex="F", birth_seed=birth_date_seed)
     dad = make_person(sex="M", birth_seed=birth_date_seed)
     marry(mom, dad)
+    # ==========================================================
 
+    # begin generation
     root_cc = make_children(mom, dad, require_at_least_one=True)
 
     expand_from_cluster(root_cc, depth=0, sp_depth=0)
