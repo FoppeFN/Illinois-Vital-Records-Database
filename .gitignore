@@ -1,6 +1,6 @@
 __pycache__/
 *.__pycache__
-*pyc
+*.pyc
 db.sqlite3
 staticfiles/
 *.env
@@ -9,4 +9,4 @@ static/dist/
 .vscode/
 .DS_Store
 Thumbs.db
-admin_password.txt
+family_tree.json

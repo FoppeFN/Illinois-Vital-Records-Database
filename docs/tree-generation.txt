@@ -1,0 +1,68 @@
+Key:
+	- Child Cluster (CC): Group of siblings all from the same parents.
+	- Child Cluster with at Least One Child (CC-f): CC with at least one child.
+	- Child Distribution (CD): Distribution of number of children per parent pair defined by a normal distribution with mean 2 and standard deviation 1.5.
+	- Sibling: Non-self member of child cluster.
+	- Partnered with Children Probability (PCP): The odds that an individual has a partner who they have had children with (69%).
+	- Partnered with Children (PC): Partnered with Children.
+	- Root: The CC currently being used as a basis to generate from.
+	- Sibling-Partner (SP): The partner of an individual's sibling.
+	- Sibling-Partner Depth (SPD): The minimum number of jumps required to reach a parent of the seed.
+	- Sibling-Partner Depth Limit (SPDL): The maximum SPD before generation is forcibly stopped.
+	- Family Tree Depth Limit (FTDL): The maximum depth a family tree can reach before generation is forcibly stopped.
+
+Steps:
+	1. Generate initial CC(i)-f using CD.
+	2. Generate parents for CC(i) as individual CC(M)-f and CC(F)-f.
+	3. For each sibling of CC(M) and CC(F), there is a PCP chance that they are PC.
+	4. For each PC sibling, generate their partner as a CC(P)-f.
+	5. Generate each PC sibling's children as CC(C).
+	6. Repeat steps 3 through 5 for all remaining siblings including siblings of partners of CC(P) until all siblings are addressed, or SPDL is reached.
+	7. Repeat steps 2 through 6 for each new CC generated from CC(i). With each iteration, treat the working CC as CC(i).
+	8. Repeat steps 2 through 7 until FTDL is reached.
+
+Notes:
+	- For each CC generated, each person must be given personal information as specified in the Personal Identifiers section. 
+	- People of unknown sex should not be PC and should not have children.
+	- Last names of children should initially match, but may be overwritten for women to reflect marriages.
+	- The percentage of women who did not take their husband's last name in the early 1900's is negligible.
+	- Exact data is hard to find, but some children's parents will not have the same last name (~5%) due to divorce, pre-marital birth, etc.
+	- The percentage of men who took their wife's last name is negligible in the early 1900's.
+	- The percentage of couples who took a hyphenated last name in the early 1900's is negligible.
+	- Divorce rate in 1930 is around 0.16%.
+
+Personal Identifiers (O=Optional, R=Required, RA=Required if Applicable):
+	- Unique Person ID (R)	#NOTE -- Not needed for DB, but likely required for relationships.
+
+	- Last Name (R)
+	- First Name (R)
+	- Middle Name (O)
+	- Sex (R)
+
+	- Date of Birth (O)
+	- County of Birth (O)
+	- City of Birth (O)
+	
+	- Date of Death (O)
+	- County of Death (O)
+	- City of Death (O)
+	- Age of Death (O)
+
+	# PARENTS
+		- Has Parents in Tree (R)
+		- Mother Unique Person ID (O)
+		- Father Unique Person ID (O)
+	
+	# CHILDREN
+		- Has Children in Tree (R)
+		- Array of Children Unique Person IDs (O)
+	
+	# MARRIAGES
+		- Has Marriages (R)
+		- Array of Marriage Objects (O) Each Including:
+			- Spouse Unique Person ID (RA)
+			- Date of Marriage (O)
+			- County of Marriage (O)
+			- City of Marriage (O)
+			- Is Divorced (RA)
+			- Date of Divorce (O)
