@@ -1,2 +1,1 @@
-﻿# Illinois Vital Records
-
+# Illinois Vitality Archive
