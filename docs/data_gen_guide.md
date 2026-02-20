@@ -1,6 +1,6 @@
 # Generating & Using Mock Data
 
-### Generation
+## Generation
 
 1. Open a shell inside the Docker web container using `docker compose exec web bash`
 2. Generate the mock data by running `python manage.py generate_family` inside the shell.
@@ -20,12 +20,12 @@
 - young_offset: The average number of years younger a child will be than their parent.
 - old_offset: The average number of years older a parent will be than their child.
 
-### Populating the Database
+## Populating the Database
 
 1. Initialize the database with Illinois counties and some cities by running `python manage.py init_db` inside the shell.
 2. Populate the database with the generated mock data by running `python manage.py mock_populate` inside the shell.
 
-### Errors
+## Errors
 
 If an error occurs, the easiest fix is usually to reset the database via the following procedure, then retry from scratch. (WARNING: THIS PROCEDURE WILL ERASE ALL DATABASE CONTENT):
 
