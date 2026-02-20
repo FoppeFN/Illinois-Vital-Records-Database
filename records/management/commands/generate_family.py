@@ -4,11 +4,12 @@ import random
 import json
 import csv
 import os
-from utils import load_county_choices, load_city_choices
+from records.utils import load_county_choices, load_city_choices
 from pathlib import Path
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
-from argparse import ArgumentParser
+from django.core.management.base import BaseCommand
+from django.conf import settings
 
 fake = Faker()
 
@@ -31,9 +32,10 @@ SPDL = 3                   # Sibling-Partner Depth Limit
 # -----------------------------
 people = {}        # person_id -> dict
 _id = 0
-counties = []      # list of {"county_code": "...", "county": "..."}
-city = {}
-marriages = {}
+counties = load_county_choices()      # list of {"county_code": "...", "county": "..."}
+cities = load_city_choices()
+marriages = []
+marriage_set = set()
 _mid = 0
 
 
@@ -133,14 +135,15 @@ def marry(p1, p2):
     if people[p1]["sex"] == "F": people[p1]["last"] = people[p2]["last"]
     if people[p2]["sex"] == "F": people[p2]["last"] = people[p1]["last"]
 
-    if marriage_id not in marriages:
-        marriages[marriage_id] = {
+    if marriage_id not in marriage_set:
+        marriage_set.add(marriage_id)
+        marriages.append({
             "spouse1": p1,
             "spouse2": p2,
             "marriage_county": marriage_county,
             "marriage_city": marriage_city,
             "marriage_date": marriage_date
-        }
+        })
         people[p1]["is_married"] = True
         people[p2]["is_married"] = True
     
@@ -356,44 +359,48 @@ def save_json(filepath: str, obj: dict):
 # -----------------------------
 # MAIN
 # -----------------------------
-if __name__ == "__main__":
-    # Seeds for repeatable output
-    np.random.seed(7)
-    random.seed(7)
-    Faker.seed(7)
+class Command(BaseCommand):
+    help = "Produce mock data"
 
-    # Load counties
-    # Put your CSV at: data/counties.csv
-    counties = load_county_choices()
-    cities = load_city_choices()
+    def handle(self, *args, **kwargs):
+        # Seeds for repeatable output
+        np.random.seed(7)
+        random.seed(7)
+        Faker.seed(7)
 
-    # Generate
-    root_cluster = generate()
+        # Generate
+        root_cluster = generate()
 
-    # Wrap output with metadata
+        # Wrap output with metadata
 
-    for person_id, info in people.items():
-        info["birth_date"] = info["birth_date"].isoformat()
-        info["death_date"] = info["death_date"].isoformat()
+        for _, info in people.items():
+            info["birth_date"] = info["birth_date"].isoformat()
+            info["death_date"] = info["death_date"].isoformat()
 
+        people.pop("P000001")
+        people.pop("P000002")
+        marriages.pop(0)
 
-    output = {
-        "meta": {
-            "pcp": PCP,
-            "cd_mean": CD_MEAN,
-            "cd_sd": CD_SD,
-            "ftdl": FTDL,
-            "spdl": SPDL,
-            "root_cluster_child_ids": root_cluster,
-            "total_people": len(people),
-        },
-        "people": people,
-        "marriages": marriages
-    }
+        output = {
+            "meta": {
+                "pcp": PCP,
+                "cd_mean": CD_MEAN,
+                "cd_sd": CD_SD,
+                "ftdl": FTDL,
+                "spdl": SPDL,
+                "root_cluster_child_ids": root_cluster,
+                "total_people": len(people),
+            },
+            "people": people,
+            "marriages": marriages
+        }
 
-    # Save JSON
-    out_path = "../output/family_tree.json"
-    save_json(out_path, output)
+        # Save JSON
+        #out_path = "../data/mock/family_tree.json"
+        out_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
+        save_json(out_path, output)
 
-    print("Wrote:", out_path)
-    print("Total people:", len(people))
+        print("Wrote:", out_path)
+        print("Total people:", len(people))
+    
+        self.stdout.write(self.style.SUCCESS("Mock data created successfully"))

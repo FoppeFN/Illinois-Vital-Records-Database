@@ -3,16 +3,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from django.contrib.auth.models import User
-from .utils import load_county_choices
 
 
 #####################################
 #          PERSON TABLES            #
 #####################################
-
-
-COUNTIES = load_county_choices()
-
 
 
 # defines binary sex choices
@@ -21,6 +16,40 @@ class Sex(models.TextChoices):
     FEMALE = 'F', 'Female'
     UNKNOWN = 'U', 'Unknown'
 
+
+
+# defines counties
+class County(models.Model):
+    #metadata
+    class Meta:
+        verbose_name = "County"
+        verbose_name_plural = "Counties"
+    
+    county_code = models.IntegerField(
+        primary_key=True
+    )
+
+    county_name = models.CharField(
+        max_length=100
+    )
+
+
+# defines cities
+class City(models.Model):
+    #metadata
+    class Meta:
+        verbose_name = "City"
+        verbose_name_plural = "Cities"
+    
+    county = models.ForeignKey(
+        County,
+        on_delete=models.CASCADE,
+        related_name="city"
+    )
+
+    city_name = models.CharField(
+        max_length=100
+    )
 
 
 # Create your models here.
@@ -115,7 +144,7 @@ class Birth(models.Model):
             'birth_county'
         ]
 
-    person = models.OneToOneField(
+    person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
         related_name="birth"
@@ -123,17 +152,18 @@ class Birth(models.Model):
 
     birth_date = models.DateField(blank=True, null=True)
 
-    birth_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,    # grab counties from CSV
+    birth_county = models.ForeignKey(
+        County,
         blank=True,
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
 
-    birth_city = models.CharField(
-        max_length = 50,
+    birth_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
     birth_record_image = models.ImageField(
@@ -157,7 +187,7 @@ class Death(models.Model):
             'death_county'
         ]
 
-    person = models.OneToOneField(
+    person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
         related_name="death"
@@ -174,17 +204,18 @@ class Death(models.Model):
         ]
     )
     
-    death_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,    # grab counties from CSV
+    death_county = models.ForeignKey(
+        County,
         blank=True,
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
 
-    death_city = models.CharField(
-        max_length = 50,
+    death_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
     death_record_image = models.ImageField(
@@ -223,20 +254,21 @@ class Marriage(models.Model):
     )
 
     marriage_date = models.DateField(null=True, blank=True)
-    marriage_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,
+    marriage_county = models.ForeignKey(
+        County,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
-    marriage_city = models.CharField(
-        max_length = 50,
+    marriage_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
-    divorce_date = models.DateField(null=True, blank=True)
+    #divorce_date = models.DateField(null=True, blank=True)
 
     marriage_record_image = models.ImageField(
         upload_to = 'marriage_records/',
