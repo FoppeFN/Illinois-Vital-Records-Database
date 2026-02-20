@@ -33,5 +33,5 @@ If an error occurs, the easiest fix is usually to reset the database via the fol
 2. Compose down the Docker container using `docker compose down -v` in the shell.
 3. Create a new file called `__init.py__` within the records/migrations folder by running `touch records/migrations/__init__.py` from the root directory.
 4. Compose up the Docker container using `docker compose up --build`
-5. Repeat generation(#Generation) and populating(#Populating-the-Database).
+5. Repeat [generation](#generation) and [populating](#populating-the-Database).
 6. If errors persist, see other documentation.
