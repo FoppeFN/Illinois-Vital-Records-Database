@@ -3,7 +3,7 @@
 ## Generation
 
 1. Open a shell inside the Docker web container using `docker compose exec web bash`
-2. Generate the mock data by running `python manage.py generate_family` inside the shell.
+2. Generate the mock data by running `python manage.py generate_family` inside the shell. This data will be stored in `data/mock/family_tree.json`
 
 #### Parameters
 
