@@ -119,7 +119,7 @@ class Person(models.Model):
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
         if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
-        return qs
+        return qs.exlucde(id=self.id)
     
     def brothers(self):
         return self.siblings(Sex.MALE)
