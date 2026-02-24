@@ -301,6 +301,11 @@ class Comment(models.Model):
         verbose_name_plural = "Comments"
         ordering = ['-creation_time']
 
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE
+    )
+
     # comment content
     comment_content = models.CharField(max_length=2000)
     creation_time = models.DateTimeField()

@@ -22,8 +22,10 @@
 
 ## Populating the Database
 
-1. Initialize the database with Illinois counties and some cities by running `python manage.py init_db` inside the shell.
-2. Populate the database with the generated mock data by running `python manage.py mock_populate` inside the shell.
+1. Stage initial migrations to the database by running `python manage.py makemigrations` inside the shell.
+2. Finalize migrations to the database by running `python manage.py migrate` inside the shell.
+3. Initialize the database with Illinois counties and some cities by running `python manage.py init_db` inside the shell.
+4. Populate the database with the generated mock data by running `python manage.py mock_populate` inside the shell.
 
 ## Errors
 
