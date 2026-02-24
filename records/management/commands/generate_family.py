@@ -4,10 +4,12 @@ import random
 import json
 import csv
 import os
-from utils import load_county_choices, load_city_choices
+from records.utils import load_county_choices, load_city_choices
 from pathlib import Path
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from django.core.management.base import BaseCommand
+from django.conf import settings
 
 fake = Faker()
 
@@ -21,7 +23,7 @@ MAX_CHILDREN = 10
 
 
 
-FTDL = 5                   # Family Tree Depth Limit
+FTDL = 6                   # Family Tree Depth Limit
 SPDL = 3                   # Sibling-Partner Depth Limit
 
 
@@ -30,9 +32,10 @@ SPDL = 3                   # Sibling-Partner Depth Limit
 # -----------------------------
 people = {}        # person_id -> dict
 _id = 0
-counties = []      # list of {"county_code": "...", "county": "..."}
-city = {}
-marriages = {}
+counties = load_county_choices()      # list of {"county_code": "...", "county": "..."}
+cities = load_city_choices()
+marriages = []
+marriage_set = set()
 _mid = 0
 
 
@@ -132,14 +135,17 @@ def marry(p1, p2):
     if people[p1]["sex"] == "F": people[p1]["last"] = people[p2]["last"]
     if people[p2]["sex"] == "F": people[p2]["last"] = people[p1]["last"]
 
-    if marriage_id not in marriages:
-        marriages[marriage_id] = {
+    if marriage_id not in marriage_set:
+        marriage_set.add(marriage_id)
+        marriages.append({
             "spouse1": p1,
             "spouse2": p2,
             "marriage_county": marriage_county,
             "marriage_city": marriage_city,
             "marriage_date": marriage_date
-        }
+        })
+        people[p1]["is_married"] = True
+        people[p2]["is_married"] = True
     
 
 # -----------------------------
@@ -164,10 +170,13 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
 
     if sex == "M":
         first = fake.first_name_male()
+        middle = fake.first_name_male()
     elif sex == "F":
         first = fake.first_name_female()
+        middle = fake.first_name_female()
     else:
         first = fake.first_name()
+        middle = fake.first_name()
 
     pid = new_id()
     last = last or fake.last_name()
@@ -185,6 +194,7 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
     people[pid] = {
         "id": pid,
         "first": first,
+        "middle": middle,
         "last": last,
         "sex": sex,
 
@@ -206,6 +216,8 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
         "death_date": death_date,
         "age": age,
 
+        #marriage
+        "is_married": False,
 
         # parents
         "mother": None,
@@ -262,14 +274,12 @@ def expand_from_cluster(cluster, depth, sp_depth):
     """
     Expands relationships starting from a CC (cluster of siblings).
     Stops at FTDL and SPDL.
-
-    Simplified version of your plan:
-    - Create parents for this cluster
-    - For each person in cluster: PCP chance they have partner+kids
-    - Optionally expand partner siblings until SPDL
-    - Optionally create "next generation" families for children until FTDL
     """
+
     if depth >= FTDL:
+        return
+    
+    if len(cluster) < 1:
         return
 
     # Create parents for this CC(i)
@@ -293,6 +303,8 @@ def expand_from_cluster(cluster, depth, sp_depth):
 
     # For each sibling in CC(i), maybe partner + children
     for person in cluster:
+        if people[person]["is_married"]:
+            continue
         if people[person]["sex"] == "U":
             continue  # unknown sex rule: no PC / no children
         if random.random() > PCP:
@@ -319,34 +331,18 @@ def expand_from_cluster(cluster, depth, sp_depth):
     expand_from_cluster(mom_cluster, depth + 1, sp_depth)
     expand_from_cluster(dad_cluster, depth + 1, sp_depth)
 
-    """
-    # Next generation: treat each child as a possible adult who forms their own family
-    for child in cluster:
-        if people[child]["sex"] == "U":
-            continue
-        if random.random() < PCP:
-            partner_sex = "F" if people[child]["sex"] == "M" else "M"
-            # SPOUSE (SAME AGE)
-            spouse = make_person(sex=partner_sex)
-            marry(child, spouse)
-
-            m = child if people[child]["sex"] == "F" else spouse
-            d = child if people[child]["sex"] == "M" else spouse
-            # CHILDREN (YOUNGER AGE)
-            child_cluster = make_children(m, d, require_at_least_one=False)
-            if child_cluster:
-                expand_from_cluster(child_cluster, depth + 1, 0)
-    """
-
 
 def generate():
     """
     Step 1: initial CC(i)-f
     """
+    # fake parents not used in family tree. just for seeding ===
     mom = make_person(sex="F", birth_seed=birth_date_seed)
     dad = make_person(sex="M", birth_seed=birth_date_seed)
     marry(mom, dad)
+    # ==========================================================
 
+    # begin generation
     root_cc = make_children(mom, dad, require_at_least_one=True)
 
     expand_from_cluster(root_cc, depth=0, sp_depth=0)
@@ -363,44 +359,48 @@ def save_json(filepath: str, obj: dict):
 # -----------------------------
 # MAIN
 # -----------------------------
-if __name__ == "__main__":
-    # Seeds for repeatable output
-    np.random.seed(7)
-    random.seed(7)
-    Faker.seed(7)
+class Command(BaseCommand):
+    help = "Produce mock data"
 
-    # Load counties
-    # Put your CSV at: data/counties.csv
-    counties = load_county_choices()
-    cities = load_city_choices()
+    def handle(self, *args, **kwargs):
+        # Seeds for repeatable output
+        np.random.seed(7)
+        random.seed(7)
+        Faker.seed(7)
 
-    # Generate
-    root_cluster = generate()
+        # Generate
+        root_cluster = generate()
 
-    # Wrap output with metadata
+        # Wrap output with metadata
 
-    for person_id, info in people.items():
-        info["birth_date"] = info["birth_date"].isoformat()
-        info["death_date"] = info["death_date"].isoformat()
+        for _, info in people.items():
+            info["birth_date"] = info["birth_date"].isoformat()
+            info["death_date"] = info["death_date"].isoformat()
 
+        people.pop("P000001")
+        people.pop("P000002")
+        marriages.pop(0)
 
-    output = {
-        "meta": {
-            "pcp": PCP,
-            "cd_mean": CD_MEAN,
-            "cd_sd": CD_SD,
-            "ftdl": FTDL,
-            "spdl": SPDL,
-            "root_cluster_child_ids": root_cluster,
-            "total_people": len(people),
-        },
-        "people": people,
-        "marriages": marriages
-    }
+        output = {
+            "meta": {
+                "pcp": PCP,
+                "cd_mean": CD_MEAN,
+                "cd_sd": CD_SD,
+                "ftdl": FTDL,
+                "spdl": SPDL,
+                "root_cluster_child_ids": root_cluster,
+                "total_people": len(people),
+            },
+            "people": people,
+            "marriages": marriages
+        }
 
-    # Save JSON
-    out_path = "../output/family_tree.json"
-    save_json(out_path, output)
+        # Save JSON
+        #out_path = "../data/mock/family_tree.json"
+        out_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
+        save_json(out_path, output)
 
-    print("Wrote:", out_path)
-    print("Total people:", len(people))
+        print("Wrote:", out_path)
+        print("Total people:", len(people))
+    
+        self.stdout.write(self.style.SUCCESS("Mock data created successfully"))
