@@ -25,6 +25,6 @@ urlpatterns = [
     path('marriage/', views.search_marriage_records, name='search_marriage_records'),
     path('birth_results/', views.search_birth_records, name='birth_results'),
     path('death_results/', views.search_death_records, name='death_results'),
-    path('marriage_results/', views.search_marriage_records, name='marriage_results')
-    path('',  name='home_page')
+    path('marriage_results/', views.search_marriage_records, name='marriage_results'),
+    path('', views.home_page,  name='home_page'),
 ]
