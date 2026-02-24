@@ -33,7 +33,7 @@ If an error occurs, the easiest fix is usually to reset the database via the fol
 
 1. Delete the contents of the records/migrations folder by running `rm records/migrations/*` from the root directory.
 2. Compose down the Docker container using `docker compose down -v` in the shell.
-3. Create a new file called `__init.py__` within the records/migrations folder by running `touch records/migrations/__init__.py` from the root directory.
+3. Create a new file called `__init__.py` within the records/migrations folder by running `touch records/migrations/__init__.py` from the root directory.
 4. Compose up the Docker container using `docker compose up --build`
 5. Repeat [generation](#generation) and [populating](#populating-the-Database).
 6. If errors persist, see other documentation.
