@@ -1,75 +1,201 @@
+from records.models import Person, Birth, Death, Marriage, County, City
+from django.db.models import CharField, TextField
+import re
 from django.db.models import Q
-from django.db.models.expressions import RawSQL
-from records.models import Person, Birth, Marriage, Death, Sex
 
-class BaseRecordSearch:
 
-    @staticmethod
-    def _build_q(filters: dict, table_name: str, related_prefix = ""):
-        q = Q()
 
-        for field, value in filters.items():
-            if value is None or value == "":
-                continue
-        
-            if field == "sex" and value in Sex.values:
-                q &= Q(**{f"{related_prefix}sex": value})
-                continue
+# HELPERS ============
 
-            # wildcards
-            if "%" in str(value) or "_" in str(value):
-                sql = f"SELECT id FROM {table_name} WHERE {field} LIKE %s"
-                q &= Q(**{f"id__in": RawSQL(sql, [value])})
-            else:
-                q &= Q(**{f"{related_prefix}{field}__icontains": value})
+def _wild_clean(filters: dict) -> dict:
+    esc = {}
+    for k, v in filters.items():
+        escaped = re.escape(v)
+        escaped = escaped.replace("%", ".*")
+        escaped = escaped.replace("_", ".")
+        esc[k] = f"^{escaped}$"
+    return esc
 
-        return q
+def _get_model_filters(filters: dict, model):
+    rv = {}
+    fields_model = {f.name for f in model._meta.concrete_fields if isinstance(f, (CharField, TextField))}
+    for k, v in filters.items():
+        if k in fields_model:
+            rv[k] = v
+    return rv
+
+def _get_date_and_variance(filters, field_name):
+    if field_name in filters:
+        return int(filters[field_name]), int(filters.get("variance", 0))
+    return None, None
+
+def _marriage_to_person_filters(filters: dict) -> tuple[dict, dict]:
+    filters_spouse1 = {}
+    filters_spouse2 = {}
+    for k, v in filters.items():
+        if "spouse1" in k:
+            _, _, k_person = k.partition("spouse1_")
+            filters_spouse1[k_person] = v
+        if "spouse2" in k:
+            _, _, k_person = k.partition("spouse2_")
+            filters_spouse2[k_person] = v
+    return _get_person_filters(filters_spouse1), _get_person_filters(filters_spouse2)
+
+def _get_date_range(d, variance) -> tuple[int, int]:
+    s = d - variance
+    e = d + variance
+    return s, e
+
+def _get_person_filters(filters: dict): return _get_model_filters(filters, Person)
+def _get_birth_filters(filters: dict): return _get_model_filters(filters, Birth)
+def _get_death_filters(filters: dict): return _get_model_filters(filters, Death)
+def _get_marriage_filters(filters: dict): return _get_model_filters(filters, Marriage)
+def _get_county_filters(filters: dict): return _get_model_filters(filters, County)
+def _get_city_filters(filters: dict): return _get_model_filters(filters, City)
+
+
+
+# SEARCH =================
+
+def birth_search(filters: dict, fuzzy: bool = False):
+    filters_birth = _wild_clean(_get_birth_filters(filters))
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
+
+    q = Q()
+
+    # Birth fields
+    for field, pattern in filters_birth.items():
+        q &= Q(**{f"{field}__iregex": pattern})
+
+    # Person fields (JOIN)
+    if fuzzy:
+        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+    else:
+        filters_person = _wild_clean(_get_person_filters(filters))
+        for field, pattern in filters_person.items():
+            q &= Q(**{f"person__{field}__iregex": pattern})
+
+    # County JOIN
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"birth_county__{field}__iregex": pattern})
+
+    # City JOIN
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"birth_city__{field}__iregex": pattern})
+
+    birth_date, variance = _get_date_and_variance(filters, "birth_date")
+
+    if birth_date is not None:
+        s, e = _get_date_range(birth_date, variance)
+        q &= Q(birth_date__year__gte=s, birth_date__year__lte=e)
+
+    return Birth.objects.filter(q)
+
+
+
+def death_search(filters: dict, fuzzy: bool = False):
+    filters_death = _wild_clean(_get_death_filters(filters))
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
+
+    q = Q()
+
+    # Death fields
+    for field, pattern in filters_death.items():
+        q &= Q(**{f"{field}__iregex": pattern})
+
+    # Person fields (JOIN)
+    if fuzzy:
+        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+    else:
+        filters_person = _wild_clean(_get_person_filters(filters))
+        for field, pattern in filters_person.items():
+            q &= Q(**{f"person__{field}__iregex": pattern})
+
+    # County JOIN
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"death_county__{field}__iregex": pattern})
+
+    # City JOIN
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"death_city__{field}__iregex": pattern})
+
+    death_date, variance = _get_date_and_variance(filters, "death_date")
+
+    if death_date is not None:
+        s, e = _get_date_range(death_date, variance)
+        q &= Q(death_date__year__gte=s, death_date__year__lte=e)
+
+    return Death.objects.filter(q)
+
+
+
+def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
+    filters_marriage = _wild_clean(_get_marriage_filters(filters))
+    filters_spouse1, filters_spouse2 = _marriage_to_person_filters(filters)
+    filters_spouse1 = _wild_clean(filters_spouse1)
+    filters_spouse2 = _wild_clean(filters_spouse2)
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
+
+    q = Q()
+
+    # Marriage fields
+    for field, pattern in filters_marriage.items():
+        q &= Q(**{f"{field}__iregex": pattern})
+
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"marriage_county__{field}__iregex": pattern})
+
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"marriage_city__{field}__iregex": pattern})
+
+    q_s1_set1 = Q()
+    q_s2_set2 = Q()
+    q_s1_set2 = Q()
+    q_s2_set1 = Q()
+
+    # spouse 1
+    if fuzzy1:
+        q_s1_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
+        q_s1_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
+    else:
+        for field, pattern in filters_spouse1.items():
+            q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
+        for field, pattern in filters_spouse2.items():
+            q_s1_set2 &= Q(**{f"spouse1__{field}__iregex": pattern})
     
+    # spouse 2
+    if fuzzy2:
+        q_s2_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
+        q_s2_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
+    else:
+        for field, pattern in filters_spouse2.items():
+            q_s2_set2 &= Q(**{f"spouse2__{field}__iregex": pattern})
+        for field, pattern in filters_spouse1.items():
+            q_s2_set1 &= Q(**{f"spouse2__{field}__iregex": pattern})
 
+    q_order1 = q_s1_set1 & q_s2_set2
+    q_order2 = q_s1_set2 & q_s2_set1
 
-class BirthRecordSearch(BaseRecordSearch):
-    
-    @staticmethod
-    def search(filters: dict):
-        qs = Birth.objects.select_related("person")
-        q = Q()
+    q &= (q_order1 | q_order2)
 
-        person_fields = [f.name for f in Person._meta.get_fields() 
-                 if f.concrete and f.name not in ["id", "mother", "father"]]
-        birth_fields = [f.name for f in Birth._meta.get_fields()
-                 if f.concrete and f.name not in ["id", "person"]]
-        
-        person_filters = {k: v for k, v in filters if k in person_fields}
-        birth_filters = {k: v for k, v in filters if k in birth_fields}
+    marriage_date, variance = _get_date_and_variance(filters, "marriage_date")
 
-        q &= BaseRecordSearch._build_q(person_filters, "records_person", related_prefix="person__")
-        q &= BaseRecordSearch._build_q(birth_filters, "records_birth")
+    if marriage_date is not None:
+        s, e = _get_date_range(marriage_date, variance)
+        q &= Q(marriage_date__year__gte=s, marriage_date__year__lte=e)
 
-        return qs.filter(q).distinct()
-    
+    return Marriage.objects.filter(q)
 
-
-class DeathRecordSearch(BaseRecordSearch):
-    
-    @staticmethod
-    def search(filters: dict):
-        qs = Birth.objects.select_related("person")
-        q = Q()
-
-        person_fields = [f.name for f in Person._meta.get_fields() 
-                 if f.concrete and f.name not in ["id", "mother", "father"]]
-        death_fields = [f.name for f in Death._meta.get_fields()
-                 if f.concrete and f.name not in ["id", "person"]]
-        
-        person_filters = {k: v for k, v in filters if k in person_fields}
-        death_filters = {k: v for k, v in filters if k in death_fields}
-
-        q &= BaseRecordSearch._build_q(person_filters, "records_person", related_prefix="person__")
-        q &= BaseRecordSearch._build_q(death_filters, "records_death")
-
-        return qs.filter(q).distinct()
-    
-
-
-
-# TODO: MARRIAGERECORDSEARCH
+def _fuzzy_person_search(query: str, prefix: str = "person__"):
+    terms = query.strip().split()
+    q = Q()
+    for term in terms:
+        q &= (
+            Q(**{f"{prefix}first_name__trigram_similar": term}) |
+            Q(**{f"{prefix}middle_name__trigram_similar": term}) |
+            Q(**{f"{prefix}last_name__trigram_similar": term})
+        )
+    return q

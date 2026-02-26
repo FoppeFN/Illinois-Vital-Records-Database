@@ -1,11 +1,14 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
-from .utils import load_county_choices
+from django.contrib.auth.models import User
 
-COUNTIES = load_county_choices()
 
+#####################################
+#          PERSON TABLES            #
+#####################################
 
 
 # defines binary sex choices
@@ -14,6 +17,52 @@ class Sex(models.TextChoices):
     FEMALE = 'F', 'Female'
     UNKNOWN = 'U', 'Unknown'
 
+
+
+# defines counties
+class County(models.Model):
+    #metadata
+    class Meta:
+        verbose_name = "County"
+        verbose_name_plural = "Counties"
+        indexes = [
+            GinIndex(fields=["county_name"], name="county_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
+    
+    county_code = models.IntegerField(
+        primary_key=True
+    )
+
+    county_name = models.CharField(
+        max_length=100
+    )
+
+    def __str__(self):
+        return f"{self.county_code}: {self.county_name}"
+
+
+# defines cities
+class City(models.Model):
+    #metadata
+    class Meta:
+        verbose_name = "City"
+        verbose_name_plural = "Cities"
+        indexes = [
+            GinIndex(fields=["city_name"], name="city_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
+    
+    county = models.ForeignKey(
+        County,
+        on_delete=models.CASCADE,
+        related_name="city"
+    )
+
+    city_name = models.CharField(
+        max_length=100
+    )
+
+    def __str__(self):
+        return f"{self.city_name} - {self.county}"
 
 
 # Create your models here.
@@ -27,6 +76,11 @@ class Person(models.Model):
             'first_name',
             'middle_name',
             'sex'
+        ]
+        indexes = [
+            GinIndex(fields=["first_name"], name="person_first_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["last_name"], name="person_last_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["middle_name"], name="person_middle_name_trgm", opclasses=["gin_trgm_ops"])
         ]
 
     # BASIC ===========================================
@@ -63,12 +117,12 @@ class Person(models.Model):
     # ==================================================
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.last_name}, {self.first_name} {self.middle_name}"
     
     # find children by obtaining all people with self as parent
     def children(self, child_sex=None):
         qs = Person.objects.filter(models.Q(mother=self) | models.Q(father=self))
-        if child_sex in Sex.values:
+        if child_sex:
             qs = qs.filter(sex=child_sex)
         return qs
     
@@ -81,9 +135,9 @@ class Person(models.Model):
     # find siblings by obtaining all people with same parent as self
     def siblings(self, sibling_sex=None):
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
-        if sibling_sex in Sex.values:
+        if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
-        return qs
+        return qs.exclude(id=self.id)
     
     def brothers(self):
         return self.siblings(Sex.MALE)
@@ -108,7 +162,7 @@ class Birth(models.Model):
             'birth_county'
         ]
 
-    person = models.OneToOneField(
+    person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
         related_name="birth"
@@ -116,17 +170,18 @@ class Birth(models.Model):
 
     birth_date = models.DateField(blank=True, null=True)
 
-    birth_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,    # grab counties from CSV
+    birth_county = models.ForeignKey(
+        County,
         blank=True,
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
 
-    birth_city = models.CharField(
-        max_length = 50,
+    birth_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
     birth_record_image = models.ImageField(
@@ -134,6 +189,9 @@ class Birth(models.Model):
         blank = True,
         null = True
     )
+
+    def __str__(self):
+        return f"{self.person}: {self.birth_date}"
 
 
 
@@ -150,7 +208,7 @@ class Death(models.Model):
             'death_county'
         ]
 
-    person = models.OneToOneField(
+    person = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
         related_name="death"
@@ -167,17 +225,18 @@ class Death(models.Model):
         ]
     )
     
-    death_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,    # grab counties from CSV
+    death_county = models.ForeignKey(
+        County,
         blank=True,
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
 
-    death_city = models.CharField(
-        max_length = 50,
+    death_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
     death_record_image = models.ImageField(
@@ -185,6 +244,9 @@ class Death(models.Model):
         blank = True,
         null = True
     )
+
+    def __str__(self):
+        return f"{self.person}: {self.death_date}"
 
 
 
@@ -216,20 +278,21 @@ class Marriage(models.Model):
     )
 
     marriage_date = models.DateField(null=True, blank=True)
-    marriage_county = models.CharField(
-        max_length=3,
-        choices = COUNTIES,
+    marriage_county = models.ForeignKey(
+        County,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
-    marriage_city = models.CharField(
-        max_length = 50,
+    marriage_city = models.ForeignKey(
+        City,
         blank = True,
-        null = True
+        null = True,
+        on_delete=models.SET_NULL
     )
 
-    divorce_date = models.DateField(null=True, blank=True)
+    #divorce_date = models.DateField(null=True, blank=True)
 
     marriage_record_image = models.ImageField(
         upload_to = 'marriage_records/',
@@ -238,10 +301,42 @@ class Marriage(models.Model):
     )
 
     def __str__(self):
-        return f"{self.spouse1} & {self.spouse2} {self.marriage_date}"
+        return f"{self.spouse1} & {self.spouse2}: {self.marriage_date}"
     
     # prevents duplicate marriages
     def save(self, *args, **kwargs):
         if self.spouse2.id < self.spouse1.id:
             self.spouse1, self.spouse2 = self.spouse2, self.spouse1
         super().save(*args, **kwargs)
+
+
+
+#################################
+#         COMMENT MODELS        #
+#################################
+
+
+
+class Comment(models.Model):
+
+    # metadata
+    class Meta:
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+        ordering = ['-creation_time']
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE
+    )
+
+    # comment content
+    comment_content = models.CharField(max_length=2000)
+    creation_time = models.DateTimeField()
+
+    # user optional content
+    commenter_name = models.CharField(max_length=100, blank=True, null=True)
+    commenter_email = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.person}: {self.creation_time}"
