@@ -211,13 +211,11 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
     return Marriage.objects.filter(q)
 
 def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, prefix: str = "person__"):
-    q = Q()
-
     with connection.cursor() as cursor:
-        cursor.execute("SET pg_trgm.similarity_threshold = 0.25;")
+        cursor.execute("SET pg_trgm.similarity_threshold = 0.3;")
 
-        q &= Q(**{f"{prefix}first_name__trigram_similar": first_name})
-        q &= Q(**{f"{prefix}middle_name__trigram_similar": middle_name})
-        q &= Q(**{f"{prefix}last_name__trigram_similar": last_name})
+        qf = Q(**{f"{prefix}first_name__trigram_similar": first_name})
+        qm = Q(**{f"{prefix}middle_name__trigram_similar": middle_name})
+        ql = Q(**{f"{prefix}last_name__trigram_similar": last_name})
 
-    return q
+    return qf, qm, ql

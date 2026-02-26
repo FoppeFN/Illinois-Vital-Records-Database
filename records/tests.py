@@ -360,7 +360,7 @@ class FuzzySearchTest(TestCase):
     def test_marriage_filtered_plus_fuzzy(self):
         # Filter by county and fuzzy spouse1
         filters = {
-            "spouse1_first_name": "Jon", "spouse1_middle_name": "L", "spouse1_last_name": "Smyth", 
+            "spouse1_first_name": "Jon", "spouse1_middle_name": "Lee", "spouse1_last_name": "Smyth", 
             "spouse2_first_name": "Mary", "spouse2_middle_name": "Ann", "spouse2_last_name": "Miller",
             "marriage_county": "Madison"
         }
