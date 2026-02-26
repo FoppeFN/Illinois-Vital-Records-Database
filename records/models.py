@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
@@ -24,6 +25,9 @@ class County(models.Model):
     class Meta:
         verbose_name = "County"
         verbose_name_plural = "Counties"
+        indexes = [
+            GinIndex(fields=["county_name"], name="county_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
     
     county_code = models.IntegerField(
         primary_key=True
@@ -43,6 +47,9 @@ class City(models.Model):
     class Meta:
         verbose_name = "City"
         verbose_name_plural = "Cities"
+        indexes = [
+            GinIndex(fields=["city_name"], name="city_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
     
     county = models.ForeignKey(
         County,
@@ -69,6 +76,11 @@ class Person(models.Model):
             'first_name',
             'middle_name',
             'sex'
+        ]
+        indexes = [
+            GinIndex(fields=["first_name"], name="person_first_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["last_name"], name="person_last_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["middle_name"], name="person_middle_name_trgm", opclasses=["gin_trgm_ops"])
         ]
 
     # BASIC ===========================================

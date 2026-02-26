@@ -1,4 +1,5 @@
 from records.models import Person, Birth, Death, Marriage, County, City
+from django.db.models import CharField, TextField
 import re
 from django.db.models import Q
 
@@ -17,7 +18,7 @@ def _wild_clean(filters: dict) -> dict:
 
 def _get_model_filters(filters: dict, model):
     rv = {}
-    fields_model = {f.name for f in model._meta.concrete_fields if "date" not in f.name}
+    fields_model = {f.name for f in model._meta.concrete_fields if isinstance(f, (CharField, TextField))}
     for k, v in filters.items():
         if k in fields_model:
             rv[k] = v
@@ -56,8 +57,7 @@ def _get_city_filters(filters: dict): return _get_model_filters(filters, City)
 
 # SEARCH =================
 
-def birth_search(filters: dict):
-    filters_person = _wild_clean(_get_person_filters(filters))
+def birth_search(filters: dict, fuzzy: bool = False):
     filters_birth = _wild_clean(_get_birth_filters(filters))
     filters_county = _wild_clean(_get_county_filters(filters))
     filters_city = _wild_clean(_get_city_filters(filters))
@@ -69,8 +69,12 @@ def birth_search(filters: dict):
         q &= Q(**{f"{field}__iregex": pattern})
 
     # Person fields (JOIN)
-    for field, pattern in filters_person.items():
-        q &= Q(**{f"person__{field}__iregex": pattern})
+    if fuzzy:
+        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+    else:
+        filters_person = _wild_clean(_get_person_filters(filters))
+        for field, pattern in filters_person.items():
+            q &= Q(**{f"person__{field}__iregex": pattern})
 
     # County JOIN
     for field, pattern in filters_county.items():
@@ -90,8 +94,7 @@ def birth_search(filters: dict):
 
 
 
-def death_search(filters: dict):
-    filters_person = _wild_clean(_get_person_filters(filters))
+def death_search(filters: dict, fuzzy: bool = False):
     filters_death = _wild_clean(_get_death_filters(filters))
     filters_county = _wild_clean(_get_county_filters(filters))
     filters_city = _wild_clean(_get_city_filters(filters))
@@ -103,8 +106,12 @@ def death_search(filters: dict):
         q &= Q(**{f"{field}__iregex": pattern})
 
     # Person fields (JOIN)
-    for field, pattern in filters_person.items():
-        q &= Q(**{f"person__{field}__iregex": pattern})
+    if fuzzy:
+        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+    else:
+        filters_person = _wild_clean(_get_person_filters(filters))
+        for field, pattern in filters_person.items():
+            q &= Q(**{f"person__{field}__iregex": pattern})
 
     # County JOIN
     for field, pattern in filters_county.items():
@@ -124,13 +131,11 @@ def death_search(filters: dict):
 
 
 
-def marriage_search(filters: dict):
+def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
     filters_marriage = _wild_clean(_get_marriage_filters(filters))
     filters_spouse1, filters_spouse2 = _marriage_to_person_filters(filters)
-
     filters_spouse1 = _wild_clean(filters_spouse1)
     filters_spouse2 = _wild_clean(filters_spouse2)
-
     filters_county = _wild_clean(_get_county_filters(filters))
     filters_city = _wild_clean(_get_city_filters(filters))
 
@@ -146,23 +151,30 @@ def marriage_search(filters: dict):
     for field, pattern in filters_city.items():
         q &= Q(**{f"marriage_city__{field}__iregex": pattern})
 
-    # Build spouse1 conditions
     q_s1_set1 = Q()
-    for field, pattern in filters_spouse1.items():
-        q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
-
     q_s2_set2 = Q()
-    for field, pattern in filters_spouse2.items():
-        q_s2_set2 &= Q(**{f"spouse2__{field}__iregex": pattern})
-
-    # Swapped order
     q_s1_set2 = Q()
-    for field, pattern in filters_spouse2.items():
-        q_s1_set2 &= Q(**{f"spouse1__{field}__iregex": pattern})
-
     q_s2_set1 = Q()
-    for field, pattern in filters_spouse1.items():
-        q_s2_set1 &= Q(**{f"spouse2__{field}__iregex": pattern})
+
+    # spouse 1
+    if fuzzy1:
+        q_s1_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
+        q_s1_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
+    else:
+        for field, pattern in filters_spouse1.items():
+            q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
+        for field, pattern in filters_spouse2.items():
+            q_s1_set2 &= Q(**{f"spouse1__{field}__iregex": pattern})
+    
+    # spouse 2
+    if fuzzy2:
+        q_s2_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
+        q_s2_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
+    else:
+        for field, pattern in filters_spouse2.items():
+            q_s2_set2 &= Q(**{f"spouse2__{field}__iregex": pattern})
+        for field, pattern in filters_spouse1.items():
+            q_s2_set1 &= Q(**{f"spouse2__{field}__iregex": pattern})
 
     q_order1 = q_s1_set1 & q_s2_set2
     q_order2 = q_s1_set2 & q_s2_set1
@@ -176,3 +188,14 @@ def marriage_search(filters: dict):
         q &= Q(marriage_date__year__gte=s, marriage_date__year__lte=e)
 
     return Marriage.objects.filter(q)
+
+def _fuzzy_person_search(query: str, prefix: str = "person__"):
+    terms = query.strip().split()
+    q = Q()
+    for term in terms:
+        q &= (
+            Q(**{f"{prefix}first_name__trigram_similar": term}) |
+            Q(**{f"{prefix}middle_name__trigram_similar": term}) |
+            Q(**{f"{prefix}last_name__trigram_similar": term})
+        )
+    return q
