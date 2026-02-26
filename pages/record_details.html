@@ -1,0 +1,85 @@
+<div class="fixed inset-0 z-50 size-auto flex items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" 
+aria-modal="true">
+    <button onclick="document.getElementById('modal-container').innerHTML=''" 
+    class="absolute top-4 right-4 z-10 text-red-500 transition">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+    
+    <div class="relative bg-white w-full max-w-xl rounded-xl overflow-y-auto max-h-[90vh]">
+        <div class="p-8">
+            <h2 class="text-3xl font-bold text-forest-green mb-6 border-b-2 border-forest-green">Record Details</h2>
+
+            <div class="space-y-3 text-lg">
+                <div class="flex justify-between">
+                    <span class="font-bold">Name:</span>
+                    <span class="text-right">Ian Dunn</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Sex:</span>
+                    <span class="text-right">Male</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Birth Date:</span>
+                    <span class="text-right">2005-03-02</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Birth Place:</span>
+                    <span class="text-right">St. Louis, St. Louis County, Missouri</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Death Date:</span>
+                    <span class="text-right">N/A</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Death Place:</span>
+                    <span class="text-right">N/A</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Mother:</span>
+                    <span class="text-right">Eve Dunn</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Father:</span>
+                    <span class="text-right">Adam Dunn</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Siblings:</span>
+                    <span class="text-right">N/A</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold">Spouse:</span>
+                    <span class="text-right">N/A</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-8 border-t border-gray-300 rounded-b-xl">
+            <h3 class="text-xl font-bold text-forest-green mb-4">Leave a Comment</h3>
+
+            <form>
+                <div class="mb-4">
+                    <label for="commenter_name" class="font-bold mb-2">Name</label>
+                    <input type="text" id="commenter_name" name="commenter_name" placerholder="Your Name"
+                    class="w-full border border-gray-300 p-3">
+                </div>
+
+                <div class="mb-6">
+                    <label for="comment_text" class="font-bold mb-2">
+                        Leave a comment with additional information about this record
+                    </label>
+                    <textarea id="comment_text" name="comment_text" rows="4" placeholder="Type your comment here..."
+                    class="w-full border border-gray-300 p-3"></textarea>
+                </div>
+
+                <div class="flex justify-center">
+                    <button type="submit" 
+                    class="bg-forest-green text-white px-8 py-3 rounded font-bold hover:bg-[#0d4a46] transition">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

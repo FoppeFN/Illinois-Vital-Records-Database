@@ -20,3 +20,6 @@ def search_marriage_records(request):
         return render(request, 'marriage_results.html', context)
     else:
         return render(request, 'search_marriage.html')
+
+def record_details(request):
+    return render(request, 'record_details.html')

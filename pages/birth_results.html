@@ -11,8 +11,10 @@
         </tr>
         <tr>
             <td class="border border-black p-4">2025-03-02</td>
-            <td class="border border-black p-4">Dunn</td>
-            <td class="border border-black p-4">Ian</td>
+            <td><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
+            class="text-left border border-black p-4 hover:underline w-full h-full">Dunn</button></td>
+            <td><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
+            class="text-left border border-black p-4 hover:underline w-full h-full">Ian</button></td>
             <td class="border border-black p-4">St. Clair</td>
             <td class="border border-black p-4">IMG.jpg</td>
         </tr>
