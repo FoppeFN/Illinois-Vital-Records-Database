@@ -1,5 +1,6 @@
 from records.models import Person, Birth, Death, Marriage, County, City
 from django.db.models import CharField, TextField
+from django.db import connection
 import re
 from django.db.models import Q
 
@@ -70,7 +71,7 @@ def birth_search(filters: dict, fuzzy: bool = False):
 
     # Person fields (JOIN)
     if fuzzy:
-        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+        q &= _fuzzy_person_search(filters.get("first_name"), filters.get("middle_name"), filters.get("last_name"))
     else:
         filters_person = _wild_clean(_get_person_filters(filters))
         for field, pattern in filters_person.items():
@@ -107,7 +108,7 @@ def death_search(filters: dict, fuzzy: bool = False):
 
     # Person fields (JOIN)
     if fuzzy:
-        q &= _fuzzy_person_search(filters.get("fuzzy_name"))
+        q &= _fuzzy_person_search(filters.get("first_name"), filters.get("middle_name"), filters.get("last_name"))
     else:
         filters_person = _wild_clean(_get_person_filters(filters))
         for field, pattern in filters_person.items():
@@ -158,8 +159,18 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
 
     # spouse 1
     if fuzzy1:
-        q_s1_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
-        q_s1_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse1"), "spouse1__")
+        q_s1_set1 &= _fuzzy_person_search(
+            filters_spouse1.get("first_name"),
+            filters_spouse1.get("middle_name"),
+            filters_spouse1.get("last_name"),
+            "spouse1__"
+        )
+        q_s1_set2 &= _fuzzy_person_search(
+            filters_spouse2.get("first_name"),
+            filters_spouse2.get("middle_name"),
+            filters_spouse2.get("last_name"),
+            "spouse1__"
+        )
     else:
         for field, pattern in filters_spouse1.items():
             q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
@@ -168,8 +179,18 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
     
     # spouse 2
     if fuzzy2:
-        q_s2_set2 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
-        q_s2_set1 &= _fuzzy_person_search(filters.get("fuzzy_spouse2"), "spouse2__")
+        q_s2_set2 &= _fuzzy_person_search(
+            filters_spouse2.get("first_name"),
+            filters_spouse2.get("middle_name"),
+            filters_spouse2.get("last_name"),
+            "spouse2__"
+        )
+        q_s2_set1 &= _fuzzy_person_search(
+            filters_spouse1.get("first_name"),
+            filters_spouse1.get("middle_name"),
+            filters_spouse1.get("last_name"),
+            "spouse2__"
+        )
     else:
         for field, pattern in filters_spouse2.items():
             q_s2_set2 &= Q(**{f"spouse2__{field}__iregex": pattern})
@@ -189,13 +210,14 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
 
     return Marriage.objects.filter(q)
 
-def _fuzzy_person_search(query: str, prefix: str = "person__"):
-    terms = query.strip().split()
+def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, prefix: str = "person__"):
     q = Q()
-    for term in terms:
-        q &= (
-            Q(**{f"{prefix}first_name__trigram_similar": term}) |
-            Q(**{f"{prefix}middle_name__trigram_similar": term}) |
-            Q(**{f"{prefix}last_name__trigram_similar": term})
-        )
+
+    with connection.cursor() as cursor:
+        cursor.execute("SET pg_trgm.similarity_threshold = 0.25;")
+
+        q &= Q(**{f"{prefix}first_name__trigram_similar": first_name})
+        q &= Q(**{f"{prefix}middle_name__trigram_similar": middle_name})
+        q &= Q(**{f"{prefix}last_name__trigram_similar": last_name})
+
     return q

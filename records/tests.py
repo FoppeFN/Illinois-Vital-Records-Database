@@ -331,31 +331,38 @@ class FuzzySearchTest(TestCase):
 
     def test_birth_fuzzy_search(self):
         # Pure fuzzy search by first/middle/last name
-        filters = {"fuzzy_name": "Jon L Smyth"}
+        filters = {"first_name": "Jon", "middle_name": "L", "last_name": "Smyth"}
         results = birth_search(filters, fuzzy=True)
         self.assertIn(self.birth2, results)
         self.assertNotIn(self.birth1, results)  # person1 is John Lee Smith, shouldn't match this query
 
     def test_birth_filtered_plus_fuzzy(self):
         # Filter by county AND fuzzy name
-        filters = {"fuzzy_name": "John Lee Smith", "birth_county": "Madison"}
+        filters = {"first_name": "Jon", "middle_name": "L", "last_name": "Smyth", "birth_county": "Madison"}
         results = birth_search(filters, fuzzy=True)
         self.assertIn(self.birth1, results)
         self.assertNotIn(self.birth2, results)  # county doesn't match
 
     def test_death_fuzzy_search(self):
-        filters = {"fuzzy_name": "Mary Ann Miller"}
+        filters = {"first_name": "Mary", "middle_name": "Ann", "last_name": "Miller"}
         results = death_search(filters, fuzzy=True)
         self.assertIn(self.death1, results)
 
     def test_marriage_fuzzy_search(self):
         # Pure fuzzy for spouses
-        filters = {"fuzzy_spouse1": "John Lee Smith", "fuzzy_spouse2": "Mary Ann Miller"}
+        filters = {
+            "spouse1_first_name": "Jon", "spouse1_middle_name": "L", "spouse1_last_name": "Smyth", 
+            "spouse2_first_name": "Mary", "spouse2_middle_name": "Ann", "spouse2_last_name": "Miller"
+        }
         results = marriage_search(filters, fuzzy1=True, fuzzy2=True)
         self.assertIn(self.marriage1, results)
 
     def test_marriage_filtered_plus_fuzzy(self):
         # Filter by county and fuzzy spouse1
-        filters = {"fuzzy_spouse1": "John Lee Smith", "spouse2_last_name": "Miller", "marriage_county": "Madison"}
+        filters = {
+            "spouse1_first_name": "Jon", "spouse1_middle_name": "L", "spouse1_last_name": "Smyth", 
+            "spouse2_first_name": "Mary", "spouse2_middle_name": "Ann", "spouse2_last_name": "Miller",
+            "marriage_county": "Madison"
+        }
         results = marriage_search(filters, fuzzy1=True, fuzzy2=False)
         self.assertIn(self.marriage1, results)
