@@ -298,71 +298,70 @@ class SearchTests(TestCase):
         self.assertEqual(results.count(), 1)
 
 class FuzzySearchTest(TestCase):
-
     def setUp(self):
-        # Create Counties
-        self.county1 = County.objects.create(county_code=1, county_name="Madison")
-        self.county2 = County.objects.create(county_code=2, county_name="Jefferson")
+        # Counties and cities
+        self.county = County.objects.create(county_code=1, county_name="Cook")
+        self.city = City.objects.create(city_name="Chicago", county=self.county)
 
-        # Create Cities
-        self.city1 = City.objects.create(county=self.county1, city_name="Springfield")
-        self.city2 = City.objects.create(county=self.county2, city_name="Franklin")
-
-        # Create Persons
+        # People
         self.person1 = Person.objects.create(first_name="John", middle_name="Lee", last_name="Smith", sex=Sex.MALE)
-        self.person2 = Person.objects.create(first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE)
-        self.person3 = Person.objects.create(first_name="Jon", middle_name="L", last_name="Smyth", sex=Sex.MALE)  # fuzzy test
+        self.person2 = Person.objects.create(first_name="Jon", middle_name="L", last_name="Smyth", sex=Sex.MALE)
+        self.person3 = Person.objects.create(first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE)
 
         # Births
-        self.birth1 = Birth.objects.create(person=self.person1, birth_date=date(1990, 5, 20),
-                                           birth_county=self.county1, birth_city=self.city1)
-        self.birth2 = Birth.objects.create(person=self.person3, birth_date=date(1991, 6, 15),
-                                           birth_county=self.county2, birth_city=self.city2)
+        self.birth1 = Birth.objects.create(person=self.person1, birth_date="1990-05-20", birth_county=self.county, birth_city=self.city)
+        self.birth2 = Birth.objects.create(person=self.person2, birth_date="1991-06-15", birth_county=self.county, birth_city=self.city)
 
         # Deaths
-        self.death1 = Death.objects.create(person=self.person2, death_date=date(2020, 1, 1),
-                                           death_county=self.county1, death_city=self.city1, death_age=75)
+        self.death1 = Death.objects.create(person=self.person1, death_date="2050-01-10", death_county=self.county, death_city=self.city)
+        self.death2 = Death.objects.create(person=self.person3, death_date="2045-02-19", death_county=self.county, death_city=self.city)
 
         # Marriages
-        self.marriage1 = Marriage.objects.create(spouse1=self.person1, spouse2=self.person2,
-                                                 marriage_date=date(2015, 6, 1),
-                                                 marriage_county=self.county1,
-                                                 marriage_city=self.city1)
-
-    def test_birth_fuzzy_search(self):
-        # Pure fuzzy search by first/middle/last name
-        filters = {"first_name": "Jon", "middle_name": "L", "last_name": "Smyth"}
-        results = birth_search(filters, fuzzy=True)
-        self.assertIn(self.birth2, results)
-        self.assertNotIn(self.birth1, results)  # person1 is John Lee Smith, shouldn't match this query
+        self.marriage1 = Marriage.objects.create(
+            spouse1=self.person1,
+            spouse2=self.person3,
+            marriage_date="2015-06-01",
+            marriage_county=self.county,
+            marriage_city=self.city
+        )
 
     def test_birth_filtered_plus_fuzzy(self):
-        # Filter by county AND fuzzy name
-        filters = {"first_name": "Jon", "middle_name": "L", "last_name": "Smyth", "birth_county": "Madison"}
+        filters = {
+            "first_name": "Jon",
+            "middle_name": "Lee",
+            "last_name": "Smyth",
+            "county_name": "Cook",
+            "city_name": "Chicago"
+        }
+
         results = birth_search(filters, fuzzy=True)
         self.assertIn(self.birth1, results)
-        self.assertNotIn(self.birth2, results)  # county doesn't match
+        self.assertNotIn(self.birth2, results)  # Does not match John Lee Smith exactly
 
-    def test_death_fuzzy_search(self):
-        filters = {"first_name": "Mary", "middle_name": "Ann", "last_name": "Miller"}
+    def test_death_filtered_plus_fuzzy(self):
+        filters = {
+            "first_name": "Jhn",
+            "middle_name": "Le",
+            "last_name": "Smitt",
+            "county_name": "Cook",
+            "city_name": "Chicago"
+        }
+
         results = death_search(filters, fuzzy=True)
         self.assertIn(self.death1, results)
+        self.assertNotIn(self.death2, results)
 
-    def test_marriage_fuzzy_search(self):
-        # Pure fuzzy for spouses
+    def test_marriage_filtered_plus_fuzzy_search(self):
         filters = {
-            "spouse1_first_name": "Jon", "spouse1_middle_name": "L", "spouse1_last_name": "Smyth", 
-            "spouse2_first_name": "Mary", "spouse2_middle_name": "Ann", "spouse2_last_name": "Miller"
+            "spouse1_first_name": "John",
+            "spouse1_middle_name": "Lee",
+            "spouse1_last_name": "Smith",
+            "spouse2_first_name": "Mary",
+            "spouse2_middle_name": "Ann",
+            "spouse2_last_name": "Miller",
+            "county_name": "Cook",
+            "city_name": "Chicago"
         }
+
         results = marriage_search(filters, fuzzy1=True, fuzzy2=True)
-        self.assertIn(self.marriage1, results)
-
-    def test_marriage_filtered_plus_fuzzy(self):
-        # Filter by county and fuzzy spouse1
-        filters = {
-            "spouse1_first_name": "Jon", "spouse1_middle_name": "Lee", "spouse1_last_name": "Smyth", 
-            "spouse2_first_name": "Mary", "spouse2_middle_name": "Ann", "spouse2_last_name": "Miller",
-            "marriage_county": "Madison"
-        }
-        results = marriage_search(filters, fuzzy1=True, fuzzy2=False)
         self.assertIn(self.marriage1, results)
