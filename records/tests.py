@@ -1,5 +1,7 @@
 from django.test import TestCase, TransactionTestCase
 from django.core.management import call_command
+from datetime import date
+from records.search.record_search import birth_search, death_search, marriage_search
 from records.models import Person, Birth, Death, Marriage, Sex, County, City
 
 class GenealogyDataTest(TestCase):
@@ -177,3 +179,120 @@ class ParentPresenceTest(TestCase):
             0,
             f"{count} person(s) have no mother or father assigned: {[p.id for p in people_without_parents]}"
         )
+
+class SearchTests(TestCase):
+
+    def setUp(self):
+
+        # Location setup
+        self.county = County.objects.create(county_code=1, county_name="Madison")
+        self.city = City.objects.create(county=self.county, city_name="Edwardsville")
+
+        # People
+        self.john = Person.objects.create(
+            first_name="John",
+            last_name="Smith"
+        )
+
+        self.jane = Person.objects.create(
+            first_name="Jane",
+            last_name="Smythe"
+        )
+
+        self.bob = Person.objects.create(
+            first_name="Robert",
+            last_name="Johnson"
+        )
+
+        # Birth records
+        self.birth1 = Birth.objects.create(
+            person=self.john,
+            birth_date=date(1900, 5, 1),
+            birth_county=self.county,
+            birth_city=self.city
+        )
+
+        self.birth2 = Birth.objects.create(
+            person=self.jane,
+            birth_date=date(1902, 6, 15),
+            birth_county=self.county,
+            birth_city=self.city
+        )
+
+        # Death record
+        self.death1 = Death.objects.create(
+            person=self.john,
+            death_date=date(1980, 1, 1)
+        )
+
+        # Marriage record
+        self.marriage = Marriage.objects.create(
+            spouse1=self.john,
+            spouse2=self.jane,
+            marriage_date=date(1925, 7, 20),
+            marriage_county=self.county,
+            marriage_city=self.city
+        )
+
+    # ---------------------
+    # Birth Search Tests
+    # ---------------------
+
+    def test_birth_exact_last_name(self):
+        results = birth_search({"last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().person, self.john)
+
+    def test_birth_percent_wildcard(self):
+        results = birth_search({"last_name": "Sm%"})
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_single_char_wildcard(self):
+        results = birth_search({"last_name": "S_%th%"})
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_date_variance(self):
+        results = birth_search({
+            "birth_date": "1900",
+            "variance": "2"
+        })
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_city_filter(self):
+        results = birth_search({"city_name": "Edward%"})
+        self.assertEqual(results.count(), 2)
+
+    # ---------------------
+    # Death Search Tests
+    # ---------------------
+
+    def test_death_search_by_person(self):
+        results = death_search({"last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().person, self.john)
+
+    def test_death_date_variance(self):
+        results = death_search({
+            "death_date": "1980",
+            "variance": "1"
+        })
+        self.assertEqual(results.count(), 1)
+
+    # ---------------------
+    # Marriage Search Tests
+    # ---------------------
+
+    def test_marriage_search_husband_name(self):
+        results = marriage_search({"husband_last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+
+    def test_marriage_search_wife_name(self):
+        results = marriage_search({"wife_last_name": "Smy%"})
+        self.assertEqual(results.count(), 1)
+
+    def test_marriage_date_variance(self):
+        results = marriage_search({
+            "marriage_date": "1925",
+            "variance": "1"
+        })
+        self.assertEqual(results.count(), 1)

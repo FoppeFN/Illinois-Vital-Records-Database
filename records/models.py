@@ -33,6 +33,9 @@ class County(models.Model):
         max_length=100
     )
 
+    def __str__(self):
+        return f"{self.county_code}: {self.county_name}"
+
 
 # defines cities
 class City(models.Model):
@@ -50,6 +53,9 @@ class City(models.Model):
     city_name = models.CharField(
         max_length=100
     )
+
+    def __str__(self):
+        return f"{self.city_name} - {self.county}"
 
 
 # Create your models here.
@@ -99,7 +105,7 @@ class Person(models.Model):
     # ==================================================
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.last_name}, {self.first_name} {self.middle_name}"
     
     # find children by obtaining all people with self as parent
     def children(self, child_sex=None):
@@ -119,7 +125,7 @@ class Person(models.Model):
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
         if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
-        return qs.exlucde(id=self.id)
+        return qs.exclude(id=self.id)
     
     def brothers(self):
         return self.siblings(Sex.MALE)
@@ -172,6 +178,9 @@ class Birth(models.Model):
         null = True
     )
 
+    def __str__(self):
+        return f"{self.person}: {self.birth_date}"
+
 
 
 
@@ -223,6 +232,9 @@ class Death(models.Model):
         blank = True,
         null = True
     )
+
+    def __str__(self):
+        return f"{self.person}: {self.death_date}"
 
 
 
@@ -277,7 +289,7 @@ class Marriage(models.Model):
     )
 
     def __str__(self):
-        return f"{self.spouse1} & {self.spouse2} {self.marriage_date}"
+        return f"{self.spouse1} & {self.spouse2}: {self.marriage_date}"
     
     # prevents duplicate marriages
     def save(self, *args, **kwargs):
@@ -313,3 +325,6 @@ class Comment(models.Model):
     # user optional content
     commenter_name = models.CharField(max_length=100, blank=True, null=True)
     commenter_email = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.person}: {self.creation_time}"

@@ -10,42 +10,23 @@ def _wild_clean(filters: dict) -> dict:
     esc = {}
     for k, v in filters.items():
         escaped = re.escape(v)
-        escaped = escaped.replace(r"\.\*", ".*")
-        escaped = escaped.replace(r"\.", ".")
+        escaped = escaped.replace("%", ".*")
+        escaped = escaped.replace("_", ".")
         esc[k] = f"^{escaped}$"
     return esc
 
-def _build_search_with_filters(filters: dict):
-    q = Q()
-    for field, pattern in filters.items():
-        q &= Q(**{f"{field}__iregex": pattern})
-    return q
-
 def _get_model_filters(filters: dict, model):
     rv = {}
-    fields_model = {f.name for f in model._meta.concrete_fields if "date" not in f}
+    fields_model = {f.name for f in model._meta.concrete_fields if "date" not in f.name}
     for k, v in filters.items():
         if k in fields_model:
             rv[k] = v
     return rv
 
-def _get_date_and_variance(filters: dict) -> tuple[int, int]:
-    for k, v in filters.items():
-        if "date" in k:
-            return int(v), int(filters.get("variance", 0))
+def _get_date_and_variance(filters, field_name):
+    if field_name in filters:
+        return int(filters[field_name]), int(filters.get("variance", 0))
     return None, None
-
-def _build_birth_date_search(d: int, variance: int):
-    s, e = _get_date_range(d, variance)
-    return Q(birth_date__year__gte=s, birth_date__year__lte=e)
-
-def _build_death_date_search(d: int, variance: int):
-    s, e = _get_date_range(d, variance)
-    return Q(death_date__year__gte=s, death_date__year__lte=e)
-
-def _build_marriage_date_search(d: int, variance: int):
-    s, e = _get_date_range(d, variance)
-    return Q(marriage_date__year__gte=s, marriage_date__year__lte=e)
 
 def _marriage_to_person_filters(filters: dict) -> tuple[dict, dict]:
     filters_spouse1 = {}
@@ -76,95 +57,122 @@ def _get_city_filters(filters: dict): return _get_model_filters(filters, City)
 # SEARCH =================
 
 def birth_search(filters: dict):
-    filters_person = _get_person_filters(filters)
-    filters_birth = _get_birth_filters(filters)
-    filters_county = _get_county_filters(filters)
-    filters_city = _get_city_filters(filters)
+    filters_person = _wild_clean(_get_person_filters(filters))
+    filters_birth = _wild_clean(_get_birth_filters(filters))
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
 
-    birth_date, variance = _get_date_and_variance(filters)
+    q = Q()
 
-    filters_person_esc = _wild_clean(filters_person)
-    filters_birth_esc = _wild_clean(filters_birth)
-    
-    q_person = _build_search_with_filters(filters_person_esc)
-    q_birth = _build_search_with_filters(filters_birth_esc)
-    q_county = _build_search_with_filters(filters_county)
-    q_city = _build_search_with_filters(filters_city)
+    # Birth fields
+    for field, pattern in filters_birth.items():
+        q &= Q(**{f"{field}__iregex": pattern})
 
-    q_pcc = q_person & Q(county__in=County.objects.filter(q_county)) & Q(city__in=City.objects.filter(q_city))
+    # Person fields (JOIN)
+    for field, pattern in filters_person.items():
+        q &= Q(**{f"person__{field}__iregex": pattern})
 
-    q_combined = q_birth & Q(person__in=Person.objects.filter(q_pcc))
+    # County JOIN
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"birth_county__{field}__iregex": pattern})
 
-    if birth_date:
-        q_combined &= _build_birth_date_search(birth_date, variance)
+    # City JOIN
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"birth_city__{field}__iregex": pattern})
 
-    return Birth.objects.filter(q_combined)
+    birth_date, variance = _get_date_and_variance(filters, "birth_date")
+
+    if birth_date is not None:
+        s, e = _get_date_range(birth_date, variance)
+        q &= Q(birth_date__year__gte=s, birth_date__year__lte=e)
+
+    return Birth.objects.filter(q)
 
 
 
 def death_search(filters: dict):
-    filters_person = _get_person_filters(filters)
-    filters_death = _get_death_filters(filters)
-    filters_county = _get_county_filters(filters)
-    filters_city = _get_city_filters(filters)
+    filters_person = _wild_clean(_get_person_filters(filters))
+    filters_death = _wild_clean(_get_death_filters(filters))
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
 
-    death_date, variance = _get_date_and_variance(filters)
+    q = Q()
 
-    filters_person_esc = _wild_clean(filters_person)
-    filters_death_esc = _wild_clean(filters_death)
+    # Death fields
+    for field, pattern in filters_death.items():
+        q &= Q(**{f"{field}__iregex": pattern})
 
-    q_person = _build_search_with_filters(filters_person_esc)
-    q_death = _build_search_with_filters(filters_death_esc)
-    q_county = _build_search_with_filters(filters_county)
-    q_city = _build_search_with_filters(filters_city)
+    # Person fields (JOIN)
+    for field, pattern in filters_person.items():
+        q &= Q(**{f"person__{field}__iregex": pattern})
 
-    q_pcc = q_person & Q(county__in=County.objects.filter(q_county)) & Q(city__in=City.objects.filter(q_city))
+    # County JOIN
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"death_county__{field}__iregex": pattern})
 
-    q_combined = q_death & Q(person__in=Person.objects.filter(q_pcc))
+    # City JOIN
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"death_city__{field}__iregex": pattern})
 
-    if death_date:
-        q_combined &= _build_birth_date_search(death_date, variance)
+    death_date, variance = _get_date_and_variance(filters, "death_date")
 
-    return Death.objects.filter(q_combined)
+    if death_date is not None:
+        s, e = _get_date_range(death_date, variance)
+        q &= Q(death_date__year__gte=s, death_date__year__lte=e)
+
+    return Death.objects.filter(q)
 
 
 
 def marriage_search(filters: dict):
-    filters_marriage = _get_marriage_filters(filters)
+    filters_marriage = _wild_clean(_get_marriage_filters(filters))
     filters_spouse1, filters_spouse2 = _marriage_to_person_filters(filters)
-    filters_county1 = _get_county_filters(filters_spouse1)
-    filters_county2 = _get_county_filters(filters_spouse2)
-    filters_city1 = _get_city_filters(filters_spouse1)
-    filters_city2 = _get_city_filters(filters_spouse2)
 
-    marriage_date, variance = _get_date_and_variance(filters)
+    filters_spouse1 = _wild_clean(filters_spouse1)
+    filters_spouse2 = _wild_clean(filters_spouse2)
 
-    filters_marriage_esc = _wild_clean(filters_marriage)
-    filters_spouse1_esc = _wild_clean(filters_spouse1)
-    filters_spouse2_esc = _wild_clean(filters_spouse2)
+    filters_county = _wild_clean(_get_county_filters(filters))
+    filters_city = _wild_clean(_get_city_filters(filters))
 
-    q_marriage = _build_search_with_filters(filters_marriage_esc)
-    q_spouse1 = _build_search_with_filters(filters_spouse1_esc)
-    q_spouse2 = _build_search_with_filters(filters_spouse2_esc)
-    q_county1 = _build_search_with_filters(filters_county1)
-    q_county2 = _build_search_with_filters(filters_county2)
-    q_city1 = _build_search_with_filters(filters_city1)
-    q_city2 = _build_search_with_filters(filters_city2)
+    q = Q()
 
-    q_pcc1 = q_spouse1 & Q(county__in=County.objects.filter(q_county1)) & Q(city__in=City.objects.filter(q_city1))
-    q_pcc2 = q_spouse2 & Q(county__in=County.objects.filter(q_county2)) & Q(city__in=City.objects.filter(q_city2))
+    # Marriage fields
+    for field, pattern in filters_marriage.items():
+        q &= Q(**{f"{field}__iregex": pattern})
 
-    # Order 1: spouse1 matches first set, spouse2 matches second set
-    q_order1 = Q(spouse1__in=Person.objects.filter(q_pcc1)) & Q(spouse2__in=Person.objects.filter(q_pcc2))
+    for field, pattern in filters_county.items():
+        q &= Q(**{f"marriage_county__{field}__iregex": pattern})
 
-    # Order 2: spouse1 matches second set, spouse2 matches first set
-    q_order2 = Q(spouse1__in=Person.objects.filter(q_pcc2)) & Q(spouse2__in=Person.objects.filter(q_pcc1))
+    for field, pattern in filters_city.items():
+        q &= Q(**{f"marriage_city__{field}__iregex": pattern})
 
-    q_spouses = q_order1 | q_order2
+    # Build spouse1 conditions
+    q_s1_set1 = Q()
+    for field, pattern in filters_spouse1.items():
+        q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
 
-    q_combined = q_marriage & q_spouses
+    q_s2_set2 = Q()
+    for field, pattern in filters_spouse2.items():
+        q_s2_set2 &= Q(**{f"spouse2__{field}__iregex": pattern})
 
-    if marriage_date:
-        q_combined &= _build_marriage_date_search(marriage_date, variance)
+    # Swapped order
+    q_s1_set2 = Q()
+    for field, pattern in filters_spouse2.items():
+        q_s1_set2 &= Q(**{f"spouse1__{field}__iregex": pattern})
 
-    return Marriage.objects.filter(q_combined)
+    q_s2_set1 = Q()
+    for field, pattern in filters_spouse1.items():
+        q_s2_set1 &= Q(**{f"spouse2__{field}__iregex": pattern})
+
+    q_order1 = q_s1_set1 & q_s2_set2
+    q_order2 = q_s1_set2 & q_s2_set1
+
+    q &= (q_order1 | q_order2)
+
+    marriage_date, variance = _get_date_and_variance(filters, "marriage_date")
+
+    if marriage_date is not None:
+        s, e = _get_date_range(marriage_date, variance)
+        q &= Q(marriage_date__year__gte=s, marriage_date__year__lte=e)
+
+    return Marriage.objects.filter(q)
