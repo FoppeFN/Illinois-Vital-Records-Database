@@ -1,0 +1,62 @@
+name: Full Python Automated Quality Gates
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 mypy bandit coverage pytest
+
+      # -------------------------
+      # Linting (Flake8)
+      # -------------------------
+      - name: Run Flake8 (Linting)
+        run: |
+          flake8 .
+
+      # -------------------------
+      # Static Analysis (mypy)
+      # -------------------------
+      - name: Run mypy (Static Type Checking)
+        run: |
+          mypy .
+
+      # -------------------------
+      # Security Scanning (Bandit)
+      # -------------------------
+      - name: Run Bandit (Security Analysis)
+        run: |
+          bandit -r . -c bandit.yaml
+
+      # -------------------------
+      # Testing + Coverage
+      # -------------------------
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest
+          coverage report --fail-under=80
+          coverage xml
+
+      # Optional: upload coverage artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
