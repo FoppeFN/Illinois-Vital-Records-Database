@@ -39,7 +39,7 @@ The expected structure of [filters](#filtered-search-parameters) for any [filter
 ### Birth Record Search
 
 | Field | Value |
-| --- | | --- |
+| --- | --- |
 | first_name | A person's first name. |
 | middle_name | A person's middle name. |
 | last_name | A person's last name. |
