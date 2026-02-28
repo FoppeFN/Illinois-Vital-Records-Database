@@ -91,7 +91,7 @@ def birth_search(filters: dict, fuzzy: bool = False):
         s, e = _get_date_range(birth_date, variance)
         q &= Q(birth_date__year__gte=s, birth_date__year__lte=e)
 
-    return Birth.objects.filter(q)
+    return Birth.objects.filter(q).distinct()
 
 
 
@@ -128,7 +128,7 @@ def death_search(filters: dict, fuzzy: bool = False):
         s, e = _get_date_range(death_date, variance)
         q &= Q(death_date__year__gte=s, death_date__year__lte=e)
 
-    return Death.objects.filter(q)
+    return Death.objects.filter(q).distinct()
 
 
 
@@ -208,7 +208,7 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
         s, e = _get_date_range(marriage_date, variance)
         q &= Q(marriage_date__year__gte=s, marriage_date__year__lte=e)
 
-    return Marriage.objects.filter(q)
+    return Marriage.objects.filter(q).distinct()
 
 def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, prefix: str = "person__"):
     with connection.cursor() as cursor:
@@ -224,3 +224,27 @@ def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, pref
         q &= Q(**{f"{prefix}last_name__trigram_similar": last_name})
 
     return q
+
+def narrow_down(query: str, objects):
+    if not query:
+        return objects
+
+    model = objects.model
+    q = Q()
+
+    for field in model._meta.get_fields():
+
+        # Direct text fields
+        if isinstance(field, (CharField, TextField)):
+            q |= Q(**{f"{field.name}__icontains": query})
+
+        # ForeignKey relations (1 level deep)
+        if field.is_relation and field.many_to_one:
+            rel_model = field.related_model
+            for rel_field in rel_model._meta.get_fields():
+                if rel_field.concrete and isinstance(rel_field, (CharField, TextField)):
+                    q |= Q(**{
+                        f"{field.name}__{rel_field.name}__icontains": query
+                    })
+
+    return objects.filter(q).distinct()
