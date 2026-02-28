@@ -27,7 +27,7 @@ These are the parameters for the [narrow down function](#narrow-down-function).
 - query (str): The string that will be searched for across all fields.
 - objects (QuerySet): A Django QuerySet as returned by a [filtered search function](#filtered-search-functions).
 
-### Narrow DOwn Function
+### Narrow Down Function
 
 - narrow_down(query, objects)
     - Returns a subset of the objects passed in based on the query passed in.
