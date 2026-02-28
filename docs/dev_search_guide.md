@@ -2,14 +2,14 @@
 
 ## Filtered Search
 
-#### Filtered Search Parameters
+### Filtered Search Parameters
 
 These are the parameters for functions listed in [Filtered Search Functions](#filtered-search-functions).
 
 - filters (dict): A dictionary of field, value pairs. See [Fields](#fields) for what is expected inside the dictionary.
 - fuzzy (bool): A boolean value indicating whether or not name fields (first_name, middle_name, or last_name) should be discovered via fuzzy search.
 
-#### Filtered Search Functions
+### Filtered Search Functions
 
 - birth_search(filters, fuzzy)
     - Returns a Django QuerySet of Birth objects based on given [parameters](#filtered-search-parameters).
@@ -20,14 +20,14 @@ These are the parameters for functions listed in [Filtered Search Functions](#fi
 
 ## Narrow Down Search
 
-#### Narrow Down Search Parameters
+### Narrow Down Search Parameters
 
 These are the parameters for the [narrow down function](#narrow-down-function).
 
 - query (str): The string that will be searched for across all fields.
 - objects (QuerySet): A Django QuerySet as returned by a [filtered search function](#filtered-search-functions).
 
-#### Narrow DOwn Function
+### Narrow DOwn Function
 
 - narrow_down(query, objects)
     - Returns a subset of the objects passed in based on the query passed in.
@@ -36,7 +36,7 @@ These are the parameters for the [narrow down function](#narrow-down-function).
 
 The expected structure of [filters](#filtered-search-parameters) for any [filtered search function](#filtered-search-functions) to work properly. Note that no field, value pair is required and any/all can be left empty. All fields and values should be passed in as strings.
 
-#### Birth Record Search
+### Birth Record Search
 
 | Field | Value |
 | --- | | --- |
@@ -48,7 +48,7 @@ The expected structure of [filters](#filtered-search-parameters) for any [filter
 | birth_date | A person's birth date. |
 | variance | The number of years of variance in birth date. |
 
-#### Death Record Search
+### Death Record Search
 
 | Field | Value |
 | --- | --- |
@@ -60,7 +60,7 @@ The expected structure of [filters](#filtered-search-parameters) for any [filter
 | death_date | A person's death date. |
 | variance | The number of years of variance in death date. |
 
-#### Marriage Record Search
+### Marriage Record Search
 
 | Field | Value |
 | --- | --- |
