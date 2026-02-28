@@ -1,5 +1,5 @@
 from records.models import Person, Birth, Death, Marriage, County, City
-from django.db.models import CharField, TextField
+from django.db.models import CharField, TextField, DateField
 from django.db import connection
 import re
 from django.db.models import Q
@@ -235,7 +235,7 @@ def narrow_down(query: str, objects):
     for field in model._meta.get_fields():
 
         # Direct text fields
-        if isinstance(field, (CharField, TextField)):
+        if isinstance(field, (CharField, TextField, DateField)):
             q |= Q(**{f"{field.name}__icontains": query})
 
         # ForeignKey relations (1 level deep)
