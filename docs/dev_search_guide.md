@@ -81,5 +81,5 @@ Additionally, [wildcards](#wildcards) can be used in values for name fields in t
 
 | Wildcard | Use |
 | --- | --- |
-| _ (underscore) | Used to indicate a single unknown character (e.g., J_n could match Jon or Jan). |
+| _ | (underscore) Used to indicate a single unknown character (e.g., J_n could match Jon or Jan). |
 | % | Used to indicate any number of unknown characters (e.g., J%n could match Jon, Jan, or John). |
