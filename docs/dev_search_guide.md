@@ -36,6 +36,8 @@ These are the parameters for the [narrow down function](#narrow-down-function).
 
 The expected structure of [filters](#filtered-search-parameters) for any [filtered search function](#filtered-search-functions) to work properly. Note that no field, value pair is required and any/all can be left empty. All fields and values should be passed in as strings.
 
+Additionally, [wildcards](#wildcards) can be used in values for name fields in the case of non-fuzzy searches. Wildcards will not break a fuzzy search, but may return unexpected results.
+
 ### Birth Record Search
 
 | Field | Value |
@@ -74,3 +76,10 @@ The expected structure of [filters](#filtered-search-parameters) for any [filter
 | city_name | The marriage city name. |
 | marriage_date | The date of marriage. |
 | variance | The number of years of variance in marriage date. |
+
+### Wildcards
+
+| Wildcard | Use |
+| --- | --- |
+| _ (underscore) | Used to indicate a single unknown character (e.g., J_n could match Jon or Jan). |
+| % | Used to indicate any number of unknown characters (e.g., J%n could match Jon, Jan, or John). |
