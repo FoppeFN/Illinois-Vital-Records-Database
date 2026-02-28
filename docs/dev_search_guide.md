@@ -7,7 +7,7 @@
 These are the parameters for functions listed in [Filtered Search Functions](#filtered-search-functions).
 
 - filters (dict): A dictionary of field, value pairs. See [Fields](#fields) for what is expected inside the dictionary.
-- fuzzy (bool): A boolean value indicating whether or not name fields (first_name, middle_name, or last_name) should be discovered via fuzzy search.
+- fuzzy (bool): A boolean value indicating whether or not name fields (first_name, middle_name, or last_name) should be discovered via fuzzy search. Fuzzy is false by default.
 
 ### Filtered Search Functions
 
