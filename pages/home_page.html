@@ -1,12 +1,21 @@
-<!doctype html>
-<html>
-  <head><title>Home</title></head>
-  <body>
-    <h1>Illinois Vital Records</h1>
-    <ul>
-      <li><a href="/birth/">Birth</a></li>
-      <li><a href="/death/">Death</a></li>
-      <li><a href="/marriage/">Marriage</a></li>
-    </ul>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Home | IIVRD{% endblock %}
+
+{% block content %}
+<h2 class="text-xl font-semibold mb-4">Welcome to IIVRD</h2>
+
+<div class="grid md:grid-cols-3 gap-6">
+    <a href="{% url 'search_birth_records' %}" class="p-6 bg-white rounded shadow">
+        Birth Records
+    </a>
+
+    <a href="{% url 'search_death_records' %}" class="p-6 bg-white rounded shadow">
+        Death Records
+    </a>
+
+    <a href="{% url 'search_marriage_records' %}" class="p-6 bg-white rounded shadow">
+        Marriage Records
+    </a>
+</div>
+{% endblock %}

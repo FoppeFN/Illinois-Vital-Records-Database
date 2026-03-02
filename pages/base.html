@@ -3,26 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Birth Records Search</title>
-    
+
+    <title>{% block title %}IIVRD{% endblock %}</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
-        tailwind.config = {theme: {
-            extend: {
-                colors: {
-                    'forest-green': '#115e59',
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'forest-green': '#115e59',
+                    }
                 }
             }
-        }}
+        }
     </script>
 
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
-<body class="bg-gray-50 front-sans">
-    <div class="container mx-auto p-8 max-w-4xl">
-        {% block content %}
-        {% endblock %}
-    </div>
+
+<body class="bg-gray-50 font-sans">
+
+    <!-- TOP GREEN BANNER -->
+    <header class="bg-forest-green text-white shadow-md">
+        <div class="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
+
+            <!-- Left: Title -->
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">
+                    <a href="{% url 'home_page' %}" class="hover:opacity-90">IIVRD</a>
+                </h1>
+                <p class="text-sm text-emerald-100">
+                    Illinois Interactive Vital Records Database
+                </p>
+            </div>
+
+            <!-- Right: Illinois Outline Image -->
+            {# Put the image at: static/images/illinois-outline.png #}
+            <div class="hidden md:block">
+                <img src="/static/images/illinois-outline.webp"
+                     alt="Illinois Outline"
+                     class="h-14 opacity-90">
+            </div>
+        </div>
+
+        <!-- NAV BAR -->
+        <div class="bg-emerald-900/30">
+            <nav class="mx-auto max-w-6xl px-6 py-3 flex flex-wrap gap-6 text-sm font-medium">
+                <a href="{% url 'home_page' %}" class="hover:underline">Home</a>
+                <a href="{% url 'search_birth_records' %}" class="hover:underline">Birth Records</a>
+                <a href="{% url 'search_death_records' %}" class="hover:underline">Death Records</a>
+                <a href="{% url 'search_marriage_records' %}" class="hover:underline">Marriage Records</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="container mx-auto p-8 max-w-4xl">
+        {% block content %}{% endblock %}
+    </main>
+
 </body>
 </html>
