@@ -1,5 +1,7 @@
 from django.test import TestCase, TransactionTestCase
 from django.core.management import call_command
+from datetime import date
+from records.search.record_search import birth_search, death_search, marriage_search, narrow_down
 from records.models import Person, Birth, Death, Marriage, Sex, County, City
 
 class GenealogyDataTest(TestCase):
@@ -177,3 +179,313 @@ class ParentPresenceTest(TestCase):
             0,
             f"{count} person(s) have no mother or father assigned: {[p.id for p in people_without_parents]}"
         )
+
+class SearchTests(TestCase):
+
+    def setUp(self):
+
+        # Location setup
+        self.county = County.objects.create(county_code=1, county_name="Madison")
+        self.city = City.objects.create(county=self.county, city_name="Edwardsville")
+
+        # People
+        self.john = Person.objects.create(
+            first_name="John",
+            last_name="Smith"
+        )
+
+        self.jane = Person.objects.create(
+            first_name="Jane",
+            last_name="Smythe"
+        )
+
+        self.bob = Person.objects.create(
+            first_name="Robert",
+            last_name="Johnson"
+        )
+
+        # Birth records
+        self.birth1 = Birth.objects.create(
+            person=self.john,
+            birth_date=date(1900, 5, 1),
+            birth_county=self.county,
+            birth_city=self.city
+        )
+
+        self.birth2 = Birth.objects.create(
+            person=self.jane,
+            birth_date=date(1902, 6, 15),
+            birth_county=self.county,
+            birth_city=self.city
+        )
+
+        # Death record
+        self.death1 = Death.objects.create(
+            person=self.john,
+            death_date=date(1980, 1, 1)
+        )
+
+        # Marriage record
+        self.marriage = Marriage.objects.create(
+            spouse1=self.john,
+            spouse2=self.jane,
+            marriage_date=date(1925, 7, 20),
+            marriage_county=self.county,
+            marriage_city=self.city
+        )
+
+    # ---------------------
+    # Birth Search Tests
+    # ---------------------
+
+    def test_birth_exact_last_name(self):
+        results = birth_search({"last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().person, self.john)
+
+    def test_birth_percent_wildcard(self):
+        results = birth_search({"last_name": "Sm%"})
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_single_char_wildcard(self):
+        results = birth_search({"last_name": "S_%th%"})
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_date_variance(self):
+        results = birth_search({
+            "birth_date": "1900",
+            "variance": "2"
+        })
+        self.assertEqual(results.count(), 2)
+
+    def test_birth_city_filter(self):
+        results = birth_search({"city_name": "Edward%"})
+        self.assertEqual(results.count(), 2)
+
+    # ---------------------
+    # Death Search Tests
+    # ---------------------
+
+    def test_death_search_by_person(self):
+        results = death_search({"last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().person, self.john)
+
+    def test_death_date_variance(self):
+        results = death_search({
+            "death_date": "1980",
+            "variance": "1"
+        })
+        self.assertEqual(results.count(), 1)
+
+    # ---------------------
+    # Marriage Search Tests
+    # ---------------------
+
+    def test_marriage_search_husband_name(self):
+        results = marriage_search({"husband_last_name": "Smith"})
+        self.assertEqual(results.count(), 1)
+
+    def test_marriage_search_wife_name(self):
+        results = marriage_search({"wife_last_name": "Smy%"})
+        self.assertEqual(results.count(), 1)
+
+    def test_marriage_date_variance(self):
+        results = marriage_search({
+            "marriage_date": "1925",
+            "variance": "1"
+        })
+        self.assertEqual(results.count(), 1)
+
+class FuzzySearchTest(TestCase):
+    def setUp(self):
+        # Counties and cities
+        self.county = County.objects.create(county_code=1, county_name="Cook")
+        self.city = City.objects.create(city_name="Chicago", county=self.county)
+
+        # People
+        self.person1 = Person.objects.create(first_name="John", middle_name="Lee", last_name="Smith", sex=Sex.MALE)
+        self.person2 = Person.objects.create(first_name="Jon", middle_name="L", last_name="Smyth", sex=Sex.MALE)
+        self.person3 = Person.objects.create(first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE)
+
+        # Births
+        self.birth1 = Birth.objects.create(person=self.person1, birth_date="1990-05-20", birth_county=self.county, birth_city=self.city)
+        self.birth2 = Birth.objects.create(person=self.person2, birth_date="1991-06-15", birth_county=self.county, birth_city=self.city)
+
+        # Deaths
+        self.death1 = Death.objects.create(person=self.person1, death_date="2050-01-10", death_county=self.county, death_city=self.city)
+        self.death2 = Death.objects.create(person=self.person3, death_date="2045-02-19", death_county=self.county, death_city=self.city)
+
+        # Marriages
+        self.marriage1 = Marriage.objects.create(
+            spouse1=self.person1,
+            spouse2=self.person3,
+            marriage_date="2015-06-01",
+            marriage_county=self.county,
+            marriage_city=self.city
+        )
+
+    def test_birth_filtered_plus_fuzzy(self):
+        filters = {
+            "first_name": "Jon",
+            "middle_name": "Lee",
+            "last_name": "Smyth",
+            "county_name": "Cook",
+            "city_name": "Chicago"
+        }
+
+        results = birth_search(filters, fuzzy=True)
+        self.assertIn(self.birth1, results)
+        self.assertNotIn(self.birth2, results)  # Does not match John Lee Smith exactly
+
+    def test_death_filtered_plus_fuzzy(self):
+        filters = {
+            "first_name": "Jhn",
+            "middle_name": "Le",
+            "last_name": "Smitt",
+            "county_name": "Cook",
+            "city_name": "Chicago"
+        }
+
+        results = death_search(filters, fuzzy=True)
+        self.assertIn(self.death1, results)
+        self.assertNotIn(self.death2, results)
+
+    def test_marriage_filtered_plus_fuzzy_search(self):
+        filters = {
+            "spouse1_first_name": "John",
+            "spouse1_middle_name": "Lee",
+            "spouse1_last_name": "Smith",
+            "spouse2_first_name": "Mary",
+            "spouse2_middle_name": "Ann",
+            "spouse2_last_name": "Miller",
+            "county_name": "Cook",
+            "city_name": "Chicago"
+        }
+
+        results = marriage_search(filters, fuzzy1=True, fuzzy2=True)
+        self.assertIn(self.marriage1, results)
+
+class NarrowDownTest(TestCase):
+
+    def setUp(self):
+        # County & City
+        self.county1 = County.objects.create(
+            county_code=1,
+            county_name="Cook County"
+        )
+        self.county2 = County.objects.create(
+            county_code=2,
+            county_name="Lake County"
+        )
+
+        self.city1 = City.objects.create(
+            city_name="Chicago",
+            county=self.county1
+        )
+        self.city2 = City.objects.create(
+            city_name="Waukegan",
+            county=self.county2
+        )
+
+        # People
+        self.person1 = Person.objects.create(
+            first_name="John",
+            middle_name="Lee",
+            last_name="Smith",
+            sex=Sex.MALE
+        )
+
+        self.person2 = Person.objects.create(
+            first_name="Mary",
+            middle_name="Ann",
+            last_name="Miller",
+            sex=Sex.FEMALE
+        )
+
+        # Births
+        self.birth1 = Birth.objects.create(
+            person=self.person1,
+            birth_date="1990-05-20",
+            birth_county=self.county1,
+            birth_city=self.city1
+        )
+
+        self.birth2 = Birth.objects.create(
+            person=self.person2,
+            birth_date="1992-03-10",
+            birth_county=self.county2,
+            birth_city=self.city2
+        )
+
+    # -----------------------------------------
+    # EMPTY QUERY
+    # -----------------------------------------
+    def test_empty_query_returns_original_queryset(self):
+        qs = Birth.objects.all()
+        narrowed = narrow_down("", qs)
+
+        self.assertEqual(qs.count(), narrowed.count())
+
+    # -----------------------------------------
+    # RELATED PERSON FIELD MATCH
+    # -----------------------------------------
+    def test_matches_related_person_last_name(self):
+        qs = Birth.objects.all()
+        narrowed = narrow_down("Smith", qs)
+
+        self.assertEqual(narrowed.count(), 1)
+        self.assertIn(self.birth1, narrowed)
+
+    # -----------------------------------------
+    # RELATED COUNTY FIELD MATCH
+    # -----------------------------------------
+    def test_matches_related_county_name(self):
+        qs = Birth.objects.all()
+        narrowed = narrow_down("Lake", qs)
+
+        self.assertEqual(narrowed.count(), 1)
+        self.assertIn(self.birth2, narrowed)
+
+    # -----------------------------------------
+    # RELATED CITY FIELD MATCH
+    # -----------------------------------------
+    def test_matches_related_city_name(self):
+        qs = Birth.objects.all()
+        narrowed = narrow_down("Chicago", qs)
+
+        self.assertEqual(narrowed.count(), 1)
+        self.assertIn(self.birth1, narrowed)
+
+    # -----------------------------------------
+    # NO MATCH
+    # -----------------------------------------
+    def test_no_match_returns_empty_queryset(self):
+        qs = Birth.objects.all()
+        narrowed = narrow_down("Nonexistent", qs)
+
+        self.assertEqual(narrowed.count(), 0)
+
+    # -----------------------------------------
+    # DISTINCT PREVENTS DUPLICATES
+    # -----------------------------------------
+    def test_distinct_prevents_duplicates(self):
+        # Create another city with same name to force multi-join possibility
+        city_duplicate = City.objects.create(
+            city_name="Chicago",
+            county=self.county2
+        )
+
+        Birth.objects.create(
+            person=self.person1,
+            birth_date="1995-01-01",
+            birth_county=self.county2,
+            birth_city=city_duplicate
+        )
+
+        qs = Birth.objects.all()
+        narrowed = narrow_down("Chicago", qs)
+
+        # Should not contain duplicate objects
+        ids = list(narrowed.values_list("id", flat=True))
+        self.assertEqual(len(ids), len(set(ids)))

@@ -14,7 +14,7 @@ class Command(BaseCommand):
         for county in counties:
             c_obj, _ = County.objects.get_or_create(
                 county_code=int(county[0]),
-                county_name=counties[1]
+                county_name=county[1]
             )
 
             for city in cities[county[0]]:

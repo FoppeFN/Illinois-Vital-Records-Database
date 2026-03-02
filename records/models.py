@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
@@ -24,6 +25,9 @@ class County(models.Model):
     class Meta:
         verbose_name = "County"
         verbose_name_plural = "Counties"
+        indexes = [
+            GinIndex(fields=["county_name"], name="county_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
     
     county_code = models.IntegerField(
         primary_key=True
@@ -33,6 +37,9 @@ class County(models.Model):
         max_length=100
     )
 
+    def __str__(self):
+        return f"{self.county_code}: {self.county_name}"
+
 
 # defines cities
 class City(models.Model):
@@ -40,6 +47,9 @@ class City(models.Model):
     class Meta:
         verbose_name = "City"
         verbose_name_plural = "Cities"
+        indexes = [
+            GinIndex(fields=["city_name"], name="city_name_trgm", opclasses=["gin_trgm_ops"])
+        ]
     
     county = models.ForeignKey(
         County,
@@ -50,6 +60,9 @@ class City(models.Model):
     city_name = models.CharField(
         max_length=100
     )
+
+    def __str__(self):
+        return f"{self.city_name} - {self.county}"
 
 
 # Create your models here.
@@ -63,6 +76,11 @@ class Person(models.Model):
             'first_name',
             'middle_name',
             'sex'
+        ]
+        indexes = [
+            GinIndex(fields=["first_name"], name="person_first_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["last_name"], name="person_last_name_trgm", opclasses=["gin_trgm_ops"]),
+            GinIndex(fields=["middle_name"], name="person_middle_name_trgm", opclasses=["gin_trgm_ops"])
         ]
 
     # BASIC ===========================================
@@ -99,7 +117,7 @@ class Person(models.Model):
     # ==================================================
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.last_name}, {self.first_name} {self.middle_name}"
     
     # find children by obtaining all people with self as parent
     def children(self, child_sex=None):
@@ -119,7 +137,7 @@ class Person(models.Model):
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
         if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
-        return qs.exlucde(id=self.id)
+        return qs.exclude(id=self.id)
     
     def brothers(self):
         return self.siblings(Sex.MALE)
@@ -172,6 +190,9 @@ class Birth(models.Model):
         null = True
     )
 
+    def __str__(self):
+        return f"{self.person}: {self.birth_date}"
+
 
 
 
@@ -223,6 +244,9 @@ class Death(models.Model):
         blank = True,
         null = True
     )
+
+    def __str__(self):
+        return f"{self.person}: {self.death_date}"
 
 
 
@@ -277,7 +301,7 @@ class Marriage(models.Model):
     )
 
     def __str__(self):
-        return f"{self.spouse1} & {self.spouse2} {self.marriage_date}"
+        return f"{self.spouse1} & {self.spouse2}: {self.marriage_date}"
     
     # prevents duplicate marriages
     def save(self, *args, **kwargs):
@@ -313,3 +337,6 @@ class Comment(models.Model):
     # user optional content
     commenter_name = models.CharField(max_length=100, blank=True, null=True)
     commenter_email = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.person}: {self.creation_time}"
