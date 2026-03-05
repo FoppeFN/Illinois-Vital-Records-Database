@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from django.contrib.auth.models import User
+from datetime import datetime
 
 
 #####################################
@@ -340,3 +341,8 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.person}: {self.creation_time}"
+
+    def save(self, *args, **kwargs):
+        if not self.creation_time:
+            self.creation_time = datetime.now()
+        super().save(*args, **kwargs)

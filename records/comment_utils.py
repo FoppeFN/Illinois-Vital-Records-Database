@@ -7,9 +7,8 @@ def add_comment(person, fields):
 
     if comment_content == "":
         return
-
-    creation_time = datetime.now()
-    comment = Comment.objects.create(person=person, comment_content=comment_content, creation_time=creation_time)
+    
+    comment = Comment.objects.create(person=person, comment_content=comment_content)
 
     commenter_name = fields.get("commenter_name", None)
     commenter_email = fields.get("commenter_email", None)
