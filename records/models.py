@@ -11,7 +11,6 @@ from datetime import datetime
 #          PERSON TABLES            #
 #####################################
 
-
 # defines binary sex choices
 class Sex(models.TextChoices):
     MALE = 'M', 'Male'
@@ -135,6 +134,8 @@ class Person(models.Model):
     
     # find siblings by obtaining all people with same parent as self
     def siblings(self, sibling_sex=None):
+        if not self.mother and not self.father:
+            return None
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
         if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
