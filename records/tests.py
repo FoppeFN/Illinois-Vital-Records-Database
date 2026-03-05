@@ -2,6 +2,7 @@ from django.test import TestCase, TransactionTestCase
 from django.core.management import call_command
 from datetime import date
 from records.search.record_search import birth_search, death_search, marriage_search, narrow_down
+from records.comment_utils import add_comment
 from records.models import Person, Birth, Death, Marriage, Sex, County, City
 
 class GenealogyDataTest(TestCase):
@@ -489,3 +490,17 @@ class NarrowDownTest(TestCase):
         # Should not contain duplicate objects
         ids = list(narrowed.values_list("id", flat=True))
         self.assertEqual(len(ids), len(set(ids)))
+
+class AddCommentTest(TestCase):
+
+    def setUp(self):
+        self.person = Person.objects.create(last_name="Smith", first_name="John")
+
+        self.fields = {
+            "comment_content": "test",
+            "commenter_name": "Zack",
+            "commenter_email": "zackbrincken@gmail.com",
+        }
+
+    def test_add_comment(self):
+        add_comment(self.person, self.fields)
