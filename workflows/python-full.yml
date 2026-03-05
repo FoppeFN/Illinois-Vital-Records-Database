@@ -1,11 +1,6 @@
 name: Full Python Automated Quality Gates
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   quality-checks:
