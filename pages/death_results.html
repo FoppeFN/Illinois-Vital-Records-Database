@@ -10,16 +10,26 @@
             <th class="border border-black p-4">County</th>
             <th class="border border-black p-4">Image</th>
         </tr>
+
+        {% for record in results %}
         <tr>
-            <td class="border border-black p-4">2000-01-01</td>
-            <td class="border border-black"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">James</button></td>
-            <td class="border border-black"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Robert</button></td>
-            <td class="border border-black"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Smith</button></td>
-            <td class="border border-black p-4">Madison</td>
+            <td class="border border-black p-4">{{record.death_date}}</td>
+            <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
+            class="text-left p-4 hover:underline w-full h-full">{{record.person.first_name}}</button></td>
+            <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
+            class="text-left p-4 hover:underline w-full h-full">{{record.person.middle_name | default_if_none:"N/A"}}</button></td>
+            <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
+            class="text-left p-4 hover:underline w-full h-full">{{record.person.last_name}}</button></td>
+            <td class="border border-black p-4">{{record.death_county}}</td>
             <td class="border border-black p-4">IMG.jpg</td>
         </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="border border-black text-center italic">
+                No birth records matched your search criteria.
+            </td>
+        </tr>
+        
+        {% endfor %}
     </table>
 </div>

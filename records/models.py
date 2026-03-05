@@ -38,7 +38,7 @@ class County(models.Model):
     )
 
     def __str__(self):
-        return f"{self.county_code}: {self.county_name}"
+        return f"{self.county_name}"
 
 
 # defines cities
@@ -62,7 +62,7 @@ class City(models.Model):
     )
 
     def __str__(self):
-        return f"{self.city_name} - {self.county}"
+        return f"{self.city_name}, {self.county} County"
 
 
 # Create your models here.

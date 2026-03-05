@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{% block title %}IIVRD{% endblock %}</title>
+    <title>{% block title %}IVA{% endblock %}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -27,34 +27,30 @@
 
     <!-- TOP GREEN BANNER -->
     <header class="bg-forest-green text-white shadow-md">
-        <div class="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
+        <div class="mx-auto max-w-6xl px-6 py-1 flex items-center justify-between">
 
             <!-- Left: Title -->
             <div>
                 <h1 class="text-2xl font-bold tracking-wide">
-                    <a href="{% url 'home_page' %}" class="hover:opacity-90">IIVRD</a>
+                    <a href="{% url 'home_page' %}" class="hover:opacity-90">IVA</a>
                 </h1>
                 <p class="text-sm text-emerald-100">
-                    Illinois Interactive Vital Records Database
+                    Illinois Vitality Archive
                 </p>
             </div>
 
             <!-- Right: Illinois Outline Image -->
             {# Put the image at: static/images/illinois-outline.png #}
             <div class="hidden md:block">
-                <img src="/static/images/illinois-outline.webp"
+                <img src="/static/images/illinois-outline.png"
                      alt="Illinois Outline"
-                     class="h-14 opacity-90">
+                     class="h-20 opacity-90">
             </div>
         </div>
 
         <!-- NAV BAR -->
         <div class="bg-emerald-900/30">
-            <nav class="mx-auto max-w-6xl px-6 py-3 flex flex-wrap gap-6 text-sm font-medium">
-                <a href="{% url 'home_page' %}" class="hover:underline">Home</a>
-                <a href="{% url 'search_birth_records' %}" class="hover:underline">Birth Records</a>
-                <a href="{% url 'search_death_records' %}" class="hover:underline">Death Records</a>
-                <a href="{% url 'search_marriage_records' %}" class="hover:underline">Marriage Records</a>
+            <nav class="mx-auto max-w-6xl px-6 gap-6 text-sm font-medium">
             </nav>
         </div>
     </header>

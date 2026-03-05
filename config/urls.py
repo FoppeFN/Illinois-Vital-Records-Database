@@ -26,5 +26,6 @@ urlpatterns = [
     path('birth_results/', views.search_birth_records, name='birth_results'),
     path('death_results/', views.search_death_records, name='death_results'),
     path('marriage_results/', views.search_marriage_records, name='marriage_results'),
+    path('person/<str:person_id>/', views.record_details, name='record_details'),
     path('', views.home_page,  name='home_page'),
 ]

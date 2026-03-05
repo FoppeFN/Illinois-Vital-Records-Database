@@ -15,35 +15,62 @@ aria-modal="true">
             <div class="space-y-3 text-lg">
                 <div class="flex justify-between">
                     <span class="font-bold">Name:</span>
-                    <span class="text-right">Ian Christian Dunn</span>
+                    <span class="text-right">
+                        {{person.first_name}} {{person.middle_name | default_if_none:""}} {{person.last_name}}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Sex:</span>
-                    <span class="text-right">Male</span>
+                    <span class="text-right">{{person.get_sex_display | default:"Unknown"}}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Birth Date:</span>
-                    <span class="text-right">2005-03-02</span>
+                    <span class="text-right">{{birth.birth_date | default:"N/A"}}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Birth Place:</span>
-                    <span class="text-right">St. Louis, St. Louis County, Missouri</span>
+                    <span class="text-right">
+                        {% if birth %}
+                            {{birth.birth_city}}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Death Date:</span>
-                    <span class="text-right">N/A</span>
+                    <span class="text-right">{{death.death_date | default:"N/A"}}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Death Place:</span>
-                    <span class="text-right">N/A</span>
+                    <span class="text-right">
+                        {% if death %}
+                            {{death.death_city}}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Mother:</span>
-                    <span class="text-right">Eve Jane Dunn</span>
+                    <span class="text-right">
+                        {% if person.mother %}
+                            {{person.mother.first_name}} {{person.mother.middle_name | default_if_none:""}} 
+                            {{person.mother.last_name}}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Father:</span>
-                    <span class="text-right">Adam John Dunn</span>
+                    <span class="text-right">
+                        {% if person.father %}
+                            {{person.father.first_name}} {{person.father.middle_name | default_if_none:""}} 
+                            {{person.father.last_name}}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Siblings:</span>
@@ -63,6 +90,12 @@ aria-modal="true">
                 <div class="mb-4">
                     <label for="commenter_name" class="font-bold mb-2">Name</label>
                     <input type="text" id="commenter_name" name="commenter_name" placeholder="Your Name"
+                    class="w-full border border-gray-300 p-3">
+                </div>
+
+                <div class="mb-4">
+                    <label for="commenter_email" class="font-bold mb-2">Email</label>
+                    <input type="email" id="commenter_email" name="commenter_email" placeholder="Your Email"
                     class="w-full border border-gray-300 p-3">
                 </div>
 
