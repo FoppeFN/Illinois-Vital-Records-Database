@@ -1,13 +1,13 @@
 <div class="fixed inset-0 z-50 size-auto flex items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" 
 aria-modal="true">
+    <button onclick="document.getElementById('modal-container').innerHTML=''" 
+    class="absolute top-4 right-4 z-10 text-red-300 transition">
+        <svg class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
     
     <div class="relative bg-white w-full max-w-xl rounded-xl overflow-y-auto max-h-[90vh]">
-        <button onclick="document.getElementById('modal-container').innerHTML=''" 
-        class="absolute top-4 right-4 z-10 text-red-500 transition">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
 
         <div class="p-8">
             <h2 class="text-3xl font-bold text-forest-green mb-6 border-b-2 border-forest-green">Record Details</h2>
@@ -74,11 +74,24 @@ aria-modal="true">
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold">Siblings:</span>
-                    <span class="text-right">N/A</span>
+                    <span class="text-right">
+                        {% for sibling in person.siblings %}
+                            {{sibling.first_name}} {{sibling.middle_name}} {{sibling.last_name}}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            N/A
+                        {% endfor %}
+                    </span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="font-bold">Spouse:</span>
-                    <span class="text-right">N/A</span>
+                    <span class="font-bold">Spouses:</span>
+                    <span class="text-right">
+                        {% for spouse in person.spouses %}
+                            {{spouse.first_name}} {{spouse.middle_name | default_if_none:""}} 
+                            {{spouse.last_name}}
+                        {% empty %}
+                            N/A
+                        {% endfor %}
+                    </span>
                 </div>
             </div>
         </div>
