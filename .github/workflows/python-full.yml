@@ -2,7 +2,7 @@ name: Full Python Quality Gates
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "marquis-branch"]
   pull_request:
     branches: ["main"]
 
