@@ -210,6 +210,17 @@ def marriage_search(filters: dict, fuzzy1: bool = False, fuzzy2: bool = False):
 
     return Marriage.objects.filter(q).distinct()
 
+def get_marriage_by_person(person):
+    marriage = Marriage.objects.filter(spouse1 = person)
+
+    if marriage:
+        return marriage
+    
+    marriage = Marriage.objects.filter(spouse2 = person)
+
+    if marriage:
+        return marriage
+
 def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, prefix: str = "person__"):
     with connection.cursor() as cursor:
         cursor.execute("SET pg_trgm.similarity_threshold = 0.25;")

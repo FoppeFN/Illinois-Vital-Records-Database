@@ -4,31 +4,35 @@
     <table class="border-collapse table-auto">
         <tr class="bg-forest-green text-white">
             <th class="border border-black p-4">Date of Marriage</th>
-            <th class="border border-black p-4">Groom's First Name</th>
-            <th class="border border-black p-4">Groom's Middle Name</th>
-            <th class="border border-black p-4">Groom's Last Name</th>
-            <th class="border border-black p-4">Bride's First Name</th>
-            <th class="border border-black p-4">Bride's Middle Name</th>
-            <th class="border border-black p-4">Bride's Last Name</th>
+            <th class="border border-black p-4">Spouse 1 Name</th>
+            <th class="border border-black p-4">Spouse 2 Name</th>
             <th class="border border-black p-4">County</th>
             <th class="border border-black p-4">Image</th>
         </tr>
+        {% for record in results %}
         <tr>
-            <td class="border border-black p-4 whitespace-nowrap">2000-01-01</td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Adam</button></td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">John</button></td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Dunn</button></td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Eve</button></td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Jane</button></td>
-            <td class="border border-black whitespace-nowrap"><button hx-get="{% url 'record_details' %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">Smith</button></td>
-            <td class="border border-black p-4 whitespace-nowrap">Madison</td>
+            <td class="border border-black p-4 whitespace-nowrap">{{record.marriage_date | default:"N/A"}}</td>
+            <td class="border border-black whitespace-nowrap"><button 
+                hx-get="{% url 'record_details' record.spouse1.id %}" 
+                hx-target="#modal-container" hx-swap="innerHTML" 
+                class="text-left p-4 hover:underline w-full h-full">
+                {{record.spouse1.first_name}} {{record.spouse1.middle_name}} {{record.spouse1.last_name}}</button>
+            </td>
+            <td class="border border-black whitespace-nowrap"><button 
+                hx-get="{% url 'record_details' record.spouse2.id %}" 
+                hx-target="#modal-container" hx-swap="innerHTML" 
+                class="text-left p-4 hover:underline w-full h-full">
+                {{record.spouse2.first_name}} {{record.spouse2.middle_name}} {{record.spouse2.last_name}}</button>
+            </td>
+            <td class="border border-black p-4 whitespace-nowrap">{{record.marriage_county | default:"N/A"}}</td>
             <td class="border border-black p-4 whitespace-nowrap">IMG.jpg</td>
         </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="border border-black text-center italic">
+                No marriage records matched your search criteria.
+            </td>
+        </tr>
+        {% endfor %}
     </table>
 </div>

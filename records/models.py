@@ -85,9 +85,9 @@ class Person(models.Model):
 
     # BASIC ===========================================
     # name
-    last_name = models.CharField(max_length = 100, blank=True, null=True)
-    first_name = models.CharField(max_length = 100, blank=True, null=True)
-    middle_name = models.CharField(max_length = 100, blank=True, null=True)
+    last_name = models.CharField(max_length = 100, blank=True, default="")
+    first_name = models.CharField(max_length = 100, blank=True, default="Unknown")
+    middle_name = models.CharField(max_length = 100, blank=True, default="")
     
     # sex
     sex = models.CharField(
@@ -134,6 +134,9 @@ class Person(models.Model):
     
     # find siblings by obtaining all people with same parent as self
     def siblings(self, sibling_sex=None):
+        if not self.mother and not self.father:
+            return None
+
         qs = Person.objects.filter(models.Q(mother=self.mother) | models.Q(father=self.father))
         if sibling_sex:
             qs = qs.filter(sex=sibling_sex)
@@ -145,7 +148,17 @@ class Person(models.Model):
     def sisters(self):
         return self.siblings(Sex.FEMALE)
     
+    def spouses(self):
+        marriages = Marriage.objects.filter(models.Q(spouse1 = self) | models.Q(spouse2 = self))
+        spouses = []
 
+        for marriage in marriages:
+            if marriage.spouse1 == self:
+                spouses.append(marriage.spouse2)
+            else:
+                spouses.append(marriage.spouse1)
+
+        return spouses
     
 
 

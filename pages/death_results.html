@@ -17,7 +17,7 @@
             <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
             class="text-left p-4 hover:underline w-full h-full">{{record.person.first_name}}</button></td>
             <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
-            class="text-left p-4 hover:underline w-full h-full">{{record.person.middle_name | default_if_none:"N/A"}}</button></td>
+            class="text-left p-4 hover:underline w-full h-full">{{record.person.middle_name}}</button></td>
             <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
             class="text-left p-4 hover:underline w-full h-full">{{record.person.last_name}}</button></td>
             <td class="border border-black p-4">{{record.death_county}}</td>
@@ -26,10 +26,9 @@
         {% empty %}
         <tr>
             <td colspan="6" class="border border-black text-center italic">
-                No birth records matched your search criteria.
+                No death records matched your search criteria.
             </td>
         </tr>
-        
         {% endfor %}
     </table>
 </div>
