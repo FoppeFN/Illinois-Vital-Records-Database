@@ -8,7 +8,7 @@
             <th class="border border-black p-4">Middle Name</th>
             <th class="border border-black p-4">Last Name</th>
             <th class="border border-black p-4">County</th>
-            <th class="border border-black p-4">Image</th>
+            <th class="border border-black p-4">Certificates</th>
         </tr>
 
         {% for record in results %}
@@ -24,7 +24,27 @@
                 hx-target="#modal-container" hx-swap="innerHTML" 
                 class="text-left p-4 hover:underline w-full h-full">{{record.person.last_name}}</button></td>
             <td class="border border-black p-4">{{record.birth_county}}</td>
-            <td class="border border-black p-4">IMG.jpg</td>
+            <td class="border border-black p-4">
+                <div class="flex flex-col gap-1">
+                    {% if record.birth_record_image %}
+                        <a href="{{ record.birth_record_image.url }}" target="_blank"
+                            class="text-forest-green hover:text-[#0d4a46]">Birth Certificate</a>
+                    {% endif %}
+                    {% for death in record.person.death.all %}{% if forloop.first %}
+                        {% if death.death_record_image %}
+                            <a href="{{ death.death_record_image.url }}" target="_blank"
+                                class="text-forest-green hover:text-[#0d4a46]">Death Certificate</a>
+                        {% endif %}
+                    {% endif %}{% endfor %}
+                    {% if not record.birth_record_image %}
+                        {% for death in record.person.death.all %}{% if forloop.first %}
+                            {% if not death.death_record_image %}
+                                <span class="text-gray-400 italic text-sm">No certificates on file</span>
+                            {% endif %}
+                        {% endif %}{% endfor %}
+                    {% endif %}
+                </div>
+            </td>
         </tr>
         {% empty %}
         <tr>

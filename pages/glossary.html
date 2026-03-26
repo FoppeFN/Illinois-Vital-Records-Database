@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Glossary – IVA{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-10">
+
+    <h1 class="text-3xl font-bold text-forest-green mb-2">Glossary</h1>
+    <hr class="border-forest-green mb-8">
+    <p class="text-gray-600 mb-8 text-sm">Definitions for common terms used throughout the Illinois Vitality Archive.</p>
+
+    <dl class="space-y-6">
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">Birth Record</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                An official document registering the birth of a person. Typically includes the individual's full name,
+                date of birth, place of birth, and parents' names.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">Death Record</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                An official document registering the death of a person. Typically includes the individual's full name,
+                date of death, place of death, and cause of death.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">Marriage Record</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                An official document registering the marriage of two individuals. Typically includes the names of both
+                parties, the date of marriage, and the county where the marriage took place.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">Vital Records</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                Records of life events kept under governmental authority, including births, deaths, marriages, and
+                divorces. Vital records are a primary source for genealogical research.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">County</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                A political and geographic subdivision of a state. Illinois is divided into 102 counties, each
+                maintaining its own local vital records.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">+/- Year Search</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                A year range search that returns records within a specified number of years of the entered date.
+                For example, searching for birth year 1924 with a variance of ±5 will return all records with
+                a birth year between 1919 and 1929. This is useful when the exact year of an event is uncertain
+                or when historical records may contain minor dating errors.
+                Records in this archive span birth years from <strong>1821 to 1960</strong> and death years from <strong>1845 to 2062</strong>.
+            </dd>
+        </div>
+
+        <div>
+            <dt class="text-lg font-semibold text-gray-800">Fuzzy Search</dt>
+            <dd class="text-gray-700 mt-1 leading-relaxed">
+                A name matching method that finds records even when the spelling is approximate or imprecise.
+                Rather than requiring an exact match, fuzzy search uses trigram similarity to identify names
+                that look or sound similar to what was entered. This is especially helpful when searching
+                historical records where names may have been recorded inconsistently or misspelled differently over time.
+            </dd>
+        </div>
+
+    </dl>
+
+</div>
+{% endblock %}

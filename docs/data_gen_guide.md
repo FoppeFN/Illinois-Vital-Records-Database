@@ -32,6 +32,7 @@
 If an error occurs, the easiest fix is usually to reset the database via the following procedure, then retry from scratch. (WARNING: THIS PROCEDURE WILL ERASE ALL DATABASE CONTENT):
 
 1. Delete the contents of the records/migrations folder by running `rm records/migrations/*` from the root directory.
+2. Delete the contents of the media folder, birth_records and death_records.
 2. Compose down the Docker container using `docker compose down -v` in the shell.
 3. Create a new file called `__init__.py` within the records/migrations folder by running `touch records/migrations/__init__.py` from the root directory.
 4. Compose up the Docker container using `docker compose up --build`

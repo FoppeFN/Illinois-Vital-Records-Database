@@ -23,6 +23,20 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
+<style>
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url('/static/images/SIUE.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.07;
+        z-index: -1;
+    }
+</style>
+
 <body class="bg-gray-50 font-sans">
 
     <!-- TOP GREEN BANNER -->
@@ -50,7 +64,13 @@
 
         <!-- NAV BAR -->
         <div class="bg-emerald-900/30">
-            <nav class="mx-auto max-w-6xl px-6 gap-6 text-sm font-medium">
+            <nav class="mx-auto max-w-6xl px-6 py-2 flex gap-6 text-sm font-medium">
+                <a href="{% url 'home_page' %}" class="text-emerald-100 hover:text-white">Home</a>
+                <a href="{% url 'search_birth_records' %}" class="text-emerald-100 hover:text-white">Birth</a>
+                <a href="{% url 'search_death_records' %}" class="text-emerald-100 hover:text-white">Death</a>
+                <a href="{% url 'search_marriage_records' %}" class="text-emerald-100 hover:text-white">Marriage</a>
+                <a href="{% url 'our_mission' %}" class="text-emerald-100 hover:text-white">Our Mission</a>
+                <a href="{% url 'glossary' %}" class="text-emerald-100 hover:text-white">Glossary</a>
             </nav>
         </div>
     </header>

@@ -8,7 +8,7 @@
             <th class="border border-black p-4">Middle Name</th>
             <th class="border border-black p-4">Last Name</th>
             <th class="border border-black p-4">County</th>
-            <th class="border border-black p-4">Image</th>
+            <th class="border border-black p-4">Certificates</th>
         </tr>
 
         {% for record in results %}
@@ -21,7 +21,27 @@
             <td class="border border-black"><button hx-get="{% url 'record_details' record.person.id %}" hx-target="#modal-container" hx-swap="innerHTML" 
             class="text-left p-4 hover:underline w-full h-full">{{record.person.last_name}}</button></td>
             <td class="border border-black p-4">{{record.death_county}}</td>
-            <td class="border border-black p-4">IMG.jpg</td>
+            <td class="border border-black p-4">
+                <div class="flex flex-col gap-1">
+                    {% for birth in record.person.birth.all %}{% if forloop.first %}
+                        {% if birth.birth_record_image %}
+                            <a href="{{ birth.birth_record_image.url }}" target="_blank"
+                                class="text-forest-green hover:text-[#0d4a46]">Birth Certificate</a>
+                        {% endif %}
+                    {% endif %}{% endfor %}
+                    {% if record.death_record_image %}
+                        <a href="{{ record.death_record_image.url }}" target="_blank"
+                            class="text-forest-green hover:text-[#0d4a46]">Death Certificate</a>
+                    {% endif %}
+                    {% if not record.death_record_image %}
+                        {% for birth in record.person.birth.all %}{% if forloop.first %}
+                            {% if not birth.birth_record_image %}
+                                <span class="text-gray-400 italic text-sm">No certificates on file</span>
+                            {% endif %}
+                        {% endif %}{% endfor %}
+                    {% endif %}
+                </div>
+            </td>
         </tr>
         {% empty %}
         <tr>

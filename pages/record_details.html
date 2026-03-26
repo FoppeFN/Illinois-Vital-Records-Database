@@ -10,7 +10,19 @@ aria-modal="true">
     <div class="relative bg-white w-full max-w-xl rounded-xl overflow-y-auto max-h-[90vh]">
 
         <div class="p-8">
-            <h2 class="text-3xl font-bold text-forest-green mb-6 border-b-2 border-forest-green">Record Details</h2>
+            <div class="flex items-center justify-between mb-6 border-b-2 border-forest-green pb-3">
+                <h2 class="text-3xl font-bold text-forest-green">Record Details</h2>
+                <div class="flex gap-2">
+                    <a href="{% url 'export_csv' person.id %}"
+                        class="bg-forest-green text-white px-4 py-2 rounded text-sm font-bold hover:bg-[#0d4a46] transition">
+                        Export CSV
+                    </a>
+                    <a href="{% url 'export_pdf' person.id %}"
+                        class="border-2 border-forest-green text-forest-green px-4 py-2 rounded text-sm font-bold hover:bg-forest-green hover:text-white transition">
+                        Export PDF
+                    </a>
+                </div>
+            </div>
 
             <div class="space-y-3 text-lg">
                 <div class="flex justify-between">
@@ -50,6 +62,18 @@ aria-modal="true">
                         {% endif %}
                     </span>
                 </div>
+                {% if birth.birth_record_image %}
+                <div class="flex flex-col gap-2 pt-2">
+                    <span class="font-bold">Birth Certificate:</span>
+                    <img src="{{ birth.birth_record_image.url }}" alt="Birth Certificate" class="w-full rounded border border-gray-200">
+                </div>
+                {% endif %}
+                {% if death.death_record_image %}
+                <div class="flex flex-col gap-2 pt-2">
+                    <span class="font-bold">Death Certificate:</span>
+                    <img src="{{ death.death_record_image.url }}" alt="Death Certificate" class="w-full rounded border border-gray-200">
+                </div>
+                {% endif %}
                 <div class="flex justify-between">
                     <span class="font-bold">Mother:</span>
                     <span class="text-right">

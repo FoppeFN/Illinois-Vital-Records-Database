@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from records.utils import load_mock_data
 from records.models import Person, Birth, Death, Marriage, Sex, County, City
+from records.image_utils import generate_birth_certificate_image, generate_death_certificate_image, image_to_content_file
 
 
 class Command(BaseCommand):
@@ -10,6 +11,7 @@ class Command(BaseCommand):
         _, people, marriages = load_mock_data()
 
         person_map = {}
+        image_count = 0
 
         for pid, pdata in people.items():
             if pdata["sex"] == "M": sex = Sex.MALE
@@ -35,16 +37,17 @@ class Command(BaseCommand):
                 city_name=pdata["death_city"]
             )
 
-            Birth.objects.create(
+            birth_obj = Birth.objects.create(
                 person=person,
                 birth_date=pdata["birth_date"],
                 birth_county=b_county,
                 birth_city=b_city
             )
 
-            Death.objects.create(
+            death_obj = Death.objects.create(
                 person=person,
                 death_date=pdata["death_date"],
+                death_age=pdata["age"],
                 death_county=d_county,
                 death_city=d_city
             )
@@ -59,8 +62,28 @@ class Command(BaseCommand):
 
             if pdata.get("father"):
                 person.father = person_map[pdata["father"]]
-            
+
             person.save()
+
+            if image_count < 100:
+                birth_obj = person.birth.first()
+                death_obj = person.death.first()
+
+                birth_img = generate_birth_certificate_image(person, birth_obj)
+                birth_obj.birth_record_image.save(
+                    f"birth_{person.id}.png",
+                    image_to_content_file(birth_img, f"birth_{person.id}.png"),
+                    save=True
+                )
+
+                death_img = generate_death_certificate_image(person, death_obj)
+                death_obj.death_record_image.save(
+                    f"death_{person.id}.png",
+                    image_to_content_file(death_img, f"death_{person.id}.png"),
+                    save=True
+                )
+
+                image_count += 1
         
         for marriage in marriages:
             

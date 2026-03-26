@@ -332,6 +332,38 @@ def expand_from_cluster(cluster, depth, sp_depth):
     expand_from_cluster(dad_cluster, depth + 1, sp_depth)
 
 
+def fix_last_names():
+    """
+    Post-processing pass: propagate patrilineal last names top-down.
+    Males and unmarried females take their father's last name.
+    Married females take their husband's current last name.
+    Iterates until stable to handle cases where parents were created after children.
+    """
+    changed = True
+    while changed:
+        changed = False
+        for pid, person in people.items():
+            father_id = person.get("father")
+            if not father_id or father_id not in people:
+                continue
+            if person["sex"] == "F" and person["is_married"]:
+                continue
+            father_last = people[father_id]["last"]
+            if person["last"] != father_last:
+                person["last"] = father_last
+                changed = True
+
+    # Re-apply married women's last names using their husband's final last name
+    for marriage in marriages:
+        p1, p2 = marriage["spouse1"], marriage["spouse2"]
+        if p1 not in people or p2 not in people:
+            continue
+        if people[p1]["sex"] == "F":
+            people[p1]["last"] = people[p2]["last"]
+        elif people[p2]["sex"] == "F":
+            people[p2]["last"] = people[p1]["last"]
+
+
 def generate():
     """
     Step 1: initial CC(i)-f
@@ -346,6 +378,7 @@ def generate():
     root_cc = make_children(mom, dad, require_at_least_one=True)
 
     expand_from_cluster(root_cc, depth=0, sp_depth=0)
+    fix_last_names()
     return root_cc
 
 
