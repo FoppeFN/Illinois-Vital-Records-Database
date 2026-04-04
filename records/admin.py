@@ -8,6 +8,9 @@ from django.urls import path
 from django.http import HttpRequest
 
 
+ext_color = "darkorange"
+
+
 # Register your models here.
 
 @admin.register(Person)
@@ -59,14 +62,14 @@ class PersonAdmin(admin.ModelAdmin):
             reverse("admin:records_birth_changelist") +
             f"?person__id__exact={obj.id}"
         )
-        return format_html('<a href="{}">View Birth Record(s)</a>', url)
+        return format_html('<a href="{}" style="color:{}">View Birth Record(s)</a>', url, ext_color)
 
     def view_death_link(self, obj):
         url = (
             reverse("admin:records_death_changelist") +
             f"?person__id__exact={obj.id}"
         )
-        return format_html('<a href="{}">View Death Record(s)</a>', url)
+        return format_html('<a href="{}" style="color:{}">View Death Record(s)</a>', url, ext_color)
 
     def view_marriage_link(self, obj):
 
@@ -82,14 +85,14 @@ class PersonAdmin(admin.ModelAdmin):
                 f"?spouse2__id__exact={obj.id}"
             )
 
-        return format_html('<a href="{}">View Marriage Record(s)</a>', url)
+        return format_html('<a href="{}" style="color:{}">View Marriage Record(s)</a>', url, ext_color)
 
     def view_comments_link(self, obj):
         url = (
             reverse("admin:records_comment_changelist")
             + f"?person__id__exact={obj.id}"
         )
-        return format_html('<a href="{}">View Comments</a>', url)
+        return format_html('<a href="{}" style="color:{}">View Comments</a>', url, ext_color)
 
     view_comments_link.short_description = "Comments"
     view_birth_link.short_description = "Birth"
@@ -123,11 +126,11 @@ class BirthAdmin(admin.ModelAdmin):
 
     def birth_county_name(self, obj):
         url = reverse("admin:records_county_change", args=[obj.birth_county.county_code])
-        return format_html('<a href="{}">{}</a>', url, obj.birth_county.county_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.birth_county.county_name)
 
     def birth_city_name(self, obj):
         url = reverse("admin:records_city_change", args=[obj.birth_city.id])
-        return format_html('<a href="{}">{}</a>', url, obj.birth_city.city_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.birth_city.city_name)
     
     def last_name(self, obj):
         return obj.person.last_name
@@ -140,7 +143,7 @@ class BirthAdmin(admin.ModelAdmin):
     
     def related_person(self, obj):
         url = reverse("admin:records_person_change", args=[obj.person.id])
-        return format_html('<a href="{}">{}</a>', url, obj.person.id)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.person.id)
     
     birth_county_name.short_description = "County"
     birth_city_name.short_description = "City"
@@ -176,11 +179,11 @@ class DeathAdmin(admin.ModelAdmin):
 
     def death_county_name(self, obj):
         url = reverse("admin:records_county_change", args=[obj.death_county.county_code])
-        return format_html('<a href="{}">{}</a>', url, obj.death_county.county_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.death_county.county_name)
 
     def death_city_name(self, obj):
         url = reverse("admin:records_city_change", args=[obj.death_city.id])
-        return format_html('<a href="{}">{}</a>', url, obj.death_city.city_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.death_city.city_name)
     
     def last_name(self, obj):
         return obj.person.last_name
@@ -193,7 +196,7 @@ class DeathAdmin(admin.ModelAdmin):
     
     def related_person(self, obj):
         url = reverse("admin:records_person_change", args=[obj.person.id])
-        return format_html('<a href="{}">{}</a>', url, obj.person.id)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.person.id)
     
     death_county_name.short_description = "County"
     death_city_name.short_description = "City"
@@ -232,19 +235,19 @@ class MarriageAdmin(admin.ModelAdmin):
 
     def marriage_county_name(self, obj):
         url = reverse("admin:records_county_change", args=[obj.marriage_county.county_code])
-        return format_html('<a href="{}">{}</a>', url, obj.marriage_county.county_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.marriage_county.county_name)
 
     def marriage_city_name(self, obj):
         url = reverse("admin:records_city_change", args=[obj.marriage_city.id])
-        return format_html('<a href="{}">{}</a>', url, obj.marriage_city.city_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.marriage_city.city_name)
     
     def sp1_id(self, obj):
         url = reverse("admin:records_person_change", args=[obj.spouse1.id])
-        return format_html('<a href="{}">{}</a>', url, obj.spouse1.id)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.spouse1.id)
     
     def sp2_id(self, obj):
         url = reverse("admin:records_person_change", args=[obj.spouse2.id])
-        return format_html('<a href="{}">{}</a>', url, obj.spouse2.id)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.spouse2.id)
     
     marriage_county_name.short_description = "County"
     marriage_city_name.short_description = "City"
@@ -284,11 +287,11 @@ class CityAdmin(admin.ModelAdmin):
 
     def county_name(self, obj):
         url = reverse("admin:records_county_change", args=[obj.county.county_code])
-        return format_html('<a href="{}">{}</a>', url, obj.county.county_name)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.county.county_name)
     
     def county_code(self, obj):
         url = reverse("admin:records_county_change", args=[obj.county.county_code])
-        return format_html('<a href="{}">{}</a>', url, obj.county.county_code)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.county.county_code)
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
@@ -323,7 +326,7 @@ class CommentAdmin(admin.ModelAdmin):
 
     def related_person(self, obj):
         url = reverse("admin:records_person_change", args=[obj.person.id])
-        return format_html('<a href="{}">{}</a>', url, obj.person)
+        return format_html('<a href="{}" style="color:{}">{}</a>', url, ext_color, obj.person)
     
 
     def get_urls(self):
