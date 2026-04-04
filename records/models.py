@@ -33,6 +33,7 @@ class County(models.Model):
     )
 
     county_name = models.CharField(
+        db_index=True,
         max_length=100
     )
 
@@ -57,6 +58,7 @@ class City(models.Model):
     )
 
     city_name = models.CharField(
+        db_index=True,
         max_length=100
     )
 
@@ -84,12 +86,13 @@ class Person(models.Model):
 
     # BASIC ===========================================
     # name
-    last_name = models.CharField(max_length = 100, blank=True, default="")
-    first_name = models.CharField(max_length = 100, blank=True, default="Unknown")
-    middle_name = models.CharField(max_length = 100, blank=True, default="")
+    last_name = models.CharField(db_index=True, max_length = 100, blank=True, default="")
+    first_name = models.CharField(db_index=True, max_length = 100, blank=True, default="Unknown")
+    middle_name = models.CharField(db_index=True, max_length = 100, blank=True, default="")
     
     # sex
     sex = models.CharField(
+        db_index=True,
         max_length = 1,
         choices = Sex.choices,
         blank=True,
@@ -179,7 +182,7 @@ class Birth(models.Model):
         related_name="birth"
     )
 
-    birth_date = models.DateField(blank=True, null=True)
+    birth_date = models.DateField(db_index=True, blank=True, null=True)
 
     birth_county = models.ForeignKey(
         County,
@@ -225,9 +228,10 @@ class Death(models.Model):
         related_name="death"
     )
 
-    death_date = models.DateField(blank=True, null=True)
+    death_date = models.DateField(db_index=True, blank=True, null=True)
 
     death_age = models.IntegerField(
+        db_index=True,
         blank=True,
         null=True,
         validators=[
@@ -288,7 +292,7 @@ class Marriage(models.Model):
         related_name = "marriages_as_spouse2"
     )
 
-    marriage_date = models.DateField(null=True, blank=True)
+    marriage_date = models.DateField(db_index=True, null=True, blank=True)
     marriage_county = models.ForeignKey(
         County,
         blank = True,
@@ -347,12 +351,15 @@ class Comment(models.Model):
     )
 
     # comment content
-    comment_content = models.CharField(max_length=2000)
+    comment_content = models.CharField(db_index=True, max_length=2000)
     creation_time = models.DateTimeField()
 
     # user optional content
-    commenter_name = models.CharField(max_length=100, blank=True, null=True)
-    commenter_email = models.CharField(max_length=100, blank=True, null=True)
+    commenter_name = models.CharField(db_index=True, max_length=100, blank=True, null=True)
+    commenter_email = models.CharField(db_index=True, max_length=100, blank=True, null=True)
+
+    # admin helper
+    seen_by_admin = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.person}: {self.creation_time}"

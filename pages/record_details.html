@@ -142,10 +142,12 @@ aria-modal="true">
             </div>
         </div>
 
-        <div class="bg-gray-50 p-8 border-t border-gray-300 rounded-b-xl">
+        <div id="comment-section" class="bg-gray-50 p-8 border-t border-gray-300 rounded-b-xl">
             <h3 class="text-xl font-bold text-forest-green mb-4">Comment</h3>
-
-            <form>
+            
+            <form hx-post="{% url 'submit_comment' person.id %}" hx-target="#comment-section" hx-swap="innerHTML"
+            hx-on:after-request="this.reset()">
+                {% csrf_token %}
                 <div class="mb-4">
                     <label for="commenter_name" class="font-bold mb-2">Name</label>
                     <input type="text" id="commenter_name" name="commenter_name" placeholder="Your Name"
@@ -167,7 +169,7 @@ aria-modal="true">
                 </div>
 
                 <div class="flex justify-center">
-                    <button type="submit" 
+                    <button type="submit"
                     class="bg-forest-green text-white px-8 py-3 rounded font-bold hover:bg-[#0d4a46] transition">
                         Submit
                     </button>

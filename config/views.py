@@ -1,11 +1,13 @@
 import csv
 import io
+from records.comment_utils import add_comment
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from records.search.record_search import birth_search, death_search, marriage_search
-from records.models import Person, Birth, Death, Marriage, County
+from records.models import Person, Birth, Death, Marriage, County, Comment
+from django.urls import reverse
 
 def search_birth_records(request):
     if request.htmx:
@@ -110,6 +112,24 @@ def record_details(request, person_id):
                'death': death}
 
     return render(request, 'record_details.html', context)
+
+def submit_comment(request, person_id):
+    person = get_object_or_404(Person, id = person_id)
+    fields = {
+        "comment_content": request.POST.get('comment_text'),
+        "commenter_name": request.POST.get('commenter_name'),
+        "commenter_email": request.POST.get('commenter_email')
+    }
+    add_comment(person, fields)
+
+    success_message = """
+    <div class="text-center p-6 bg-green-50 rounded border border-green-200">
+        <h3 class="text-xl font-bold text-forest-green mb-2">Thank you!</h3>
+        <p class="text-gray-700">Your information has been successfully submitted to the archive for review.</p>
+    </div>
+    """
+    return HttpResponse(success_message)
+
 
 def export_csv(request, person_id):
     person = get_object_or_404(Person, id=person_id)
@@ -248,7 +268,6 @@ def export_pdf(request, person_id):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{person.last_name}_{person.first_name}_record.pdf"'
     return response
-
 
 def home(request):
     return render(request, "home.html")

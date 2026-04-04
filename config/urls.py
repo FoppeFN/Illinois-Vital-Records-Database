@@ -29,6 +29,7 @@ urlpatterns = [
     path('death_results/', views.search_death_records, name='death_results'),
     path('marriage_results/', views.search_marriage_records, name='marriage_results'),
     path('person/<str:person_id>/', views.record_details, name='record_details'),
+    path('submit_comment/<str:person_id>/', views.submit_comment, name='submit_comment'),
     path('person/<str:person_id>/export/csv/', views.export_csv, name='export_csv'),
     path('person/<str:person_id>/export/pdf/', views.export_pdf, name='export_pdf'),
     path('', views.home,  name='home'),
