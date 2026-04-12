@@ -115,7 +115,7 @@ def export_csv(request, person_id):
     person = get_object_or_404(Person, id=person_id)
     birth = Birth.objects.filter(person=person).first()
     death = Death.objects.filter(person=person).first()
-    marriages = Marriage.objects.filter(Q(spouse1=person) | Q(spouse2=person))
+    # marriages = Marriage.objects.filter(Q(spouse1=person) | Q(spouse2=person))
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{person.last_name}_{person.first_name}_record.csv"'

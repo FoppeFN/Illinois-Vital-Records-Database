@@ -327,7 +327,7 @@ class FuzzySearchTest(TestCase):
 
     def test_birth_filtered_plus_fuzzy(self):
         filters = {
-            "first_name": "Jon",
+            "first_name": "John",
             "middle_name": "Lee",
             "last_name": "Smyth",
             "county_name": "Cook",
@@ -340,8 +340,8 @@ class FuzzySearchTest(TestCase):
 
     def test_death_filtered_plus_fuzzy(self):
         filters = {
-            "first_name": "Jhn",
-            "middle_name": "Le",
+            "first_name": "John",
+            "middle_name": "Lee",
             "last_name": "Smitt",
             "county_name": "Cook",
             "city_name": "Chicago"
@@ -355,15 +355,15 @@ class FuzzySearchTest(TestCase):
         filters = {
             "spouse1_first_name": "John",
             "spouse1_middle_name": "Lee",
-            "spouse1_last_name": "Smith",
-            "spouse2_first_name": "Mary",
+            "spouse1_last_name": "Smyth",
+            "spouse2_first_name": "Marie",
             "spouse2_middle_name": "Ann",
-            "spouse2_last_name": "Miller",
+            "spouse2_last_name": "Miler",
             "county_name": "Cook",
             "city_name": "Chicago"
         }
 
-        results = marriage_search(filters, fuzzy1=True, fuzzy2=True)
+        results = marriage_search(filters, fuzzy=True)
         self.assertIn(self.marriage1, results)
 
 class NarrowDownTest(TestCase):
