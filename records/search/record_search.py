@@ -1,12 +1,12 @@
-from records.models import Person, Birth, Death, Marriage, County, City
-from django.db.models import CharField, TextField, DateField
-from django.db import connection
 import re
-from django.db.models import Q
 
+from django.db import connection
+from django.db.models import CharField, DateField, Q, TextField
 
+from records.models import Birth, City, County, Death, Marriage, Person
 
 # HELPERS ============
+
 
 def _wild_clean(filters: dict) -> dict:
     esc = {}
@@ -17,18 +17,25 @@ def _wild_clean(filters: dict) -> dict:
         esc[k] = f"^{escaped}$"
     return esc
 
+
 def _get_model_filters(filters: dict, model):
     rv = {}
-    fields_model = {f.name for f in model._meta.concrete_fields if isinstance(f, (CharField, TextField))}
+    fields_model = {
+        f.name
+        for f in model._meta.concrete_fields
+        if isinstance(f, (CharField, TextField))
+    }
     for k, v in filters.items():
         if k in fields_model:
             rv[k] = v
     return rv
 
+
 def _get_date_and_variance(filters, field_name):
     if field_name in filters:
         return int(filters[field_name]), int(filters.get("variance", 0))
     return None, None
+
 
 def _marriage_to_person_filters(filters: dict) -> tuple[dict, dict]:
     filters_spouse1 = {}
@@ -42,21 +49,39 @@ def _marriage_to_person_filters(filters: dict) -> tuple[dict, dict]:
             filters_spouse2[k_person] = v
     return _get_person_filters(filters_spouse1), _get_person_filters(filters_spouse2)
 
+
 def _get_date_range(d, variance) -> tuple[int, int]:
     s = d - variance
     e = d + variance
     return s, e
 
-def _get_person_filters(filters: dict): return _get_model_filters(filters, Person)
-def _get_birth_filters(filters: dict): return _get_model_filters(filters, Birth)
-def _get_death_filters(filters: dict): return _get_model_filters(filters, Death)
-def _get_marriage_filters(filters: dict): return _get_model_filters(filters, Marriage)
-def _get_county_filters(filters: dict): return _get_model_filters(filters, County)
-def _get_city_filters(filters: dict): return _get_model_filters(filters, City)
 
+def _get_person_filters(filters: dict):
+    return _get_model_filters(filters, Person)
+
+
+def _get_birth_filters(filters: dict):
+    return _get_model_filters(filters, Birth)
+
+
+def _get_death_filters(filters: dict):
+    return _get_model_filters(filters, Death)
+
+
+def _get_marriage_filters(filters: dict):
+    return _get_model_filters(filters, Marriage)
+
+
+def _get_county_filters(filters: dict):
+    return _get_model_filters(filters, County)
+
+
+def _get_city_filters(filters: dict):
+    return _get_model_filters(filters, City)
 
 
 # SEARCH =================
+
 
 def birth_search(filters: dict, fuzzy: bool = False):
     filters_birth = _wild_clean(_get_birth_filters(filters))
@@ -71,7 +96,11 @@ def birth_search(filters: dict, fuzzy: bool = False):
 
     # Person fields (JOIN)
     if fuzzy:
-        q &= _fuzzy_person_search(filters.get("first_name"), filters.get("middle_name"), filters.get("last_name"))
+        q &= _fuzzy_person_search(
+            filters.get("first_name"),
+            filters.get("middle_name"),
+            filters.get("last_name"),
+        )
     else:
         filters_person = _wild_clean(_get_person_filters(filters))
         for field, pattern in filters_person.items():
@@ -94,7 +123,6 @@ def birth_search(filters: dict, fuzzy: bool = False):
     return Birth.objects.filter(q).distinct()
 
 
-
 def death_search(filters: dict, fuzzy: bool = False):
     filters_death = _wild_clean(_get_death_filters(filters))
     filters_county = _wild_clean(_get_county_filters(filters))
@@ -108,7 +136,11 @@ def death_search(filters: dict, fuzzy: bool = False):
 
     # Person fields (JOIN)
     if fuzzy:
-        q &= _fuzzy_person_search(filters.get("first_name"), filters.get("middle_name"), filters.get("last_name"))
+        q &= _fuzzy_person_search(
+            filters.get("first_name"),
+            filters.get("middle_name"),
+            filters.get("last_name"),
+        )
     else:
         filters_person = _wild_clean(_get_person_filters(filters))
         for field, pattern in filters_person.items():
@@ -129,7 +161,6 @@ def death_search(filters: dict, fuzzy: bool = False):
         q &= Q(death_date__year__gte=s, death_date__year__lte=e)
 
     return Death.objects.filter(q).distinct()
-
 
 
 def marriage_search(filters: dict, fuzzy: bool = False):
@@ -163,33 +194,33 @@ def marriage_search(filters: dict, fuzzy: bool = False):
             filters_spouse1.get("first_name"),
             filters_spouse1.get("middle_name"),
             filters_spouse1.get("last_name"),
-            "spouse1__"
+            "spouse1__",
         )
         q_s1_set2 &= _fuzzy_person_search(
             filters_spouse2.get("first_name"),
             filters_spouse2.get("middle_name"),
             filters_spouse2.get("last_name"),
-            "spouse1__"
+            "spouse1__",
         )
     else:
         for field, pattern in filters_spouse1.items():
             q_s1_set1 &= Q(**{f"spouse1__{field}__iregex": pattern})
         for field, pattern in filters_spouse2.items():
             q_s1_set2 &= Q(**{f"spouse1__{field}__iregex": pattern})
-    
+
     # spouse 2
     if fuzzy:
         q_s2_set2 &= _fuzzy_person_search(
             filters_spouse2.get("first_name"),
             filters_spouse2.get("middle_name"),
             filters_spouse2.get("last_name"),
-            "spouse2__"
+            "spouse2__",
         )
         q_s2_set1 &= _fuzzy_person_search(
             filters_spouse1.get("first_name"),
             filters_spouse1.get("middle_name"),
             filters_spouse1.get("last_name"),
-            "spouse2__"
+            "spouse2__",
         )
     else:
         for field, pattern in filters_spouse2.items():
@@ -200,7 +231,7 @@ def marriage_search(filters: dict, fuzzy: bool = False):
     q_order1 = q_s1_set1 & q_s2_set2
     q_order2 = q_s1_set2 & q_s2_set1
 
-    q &= (q_order1 | q_order2)
+    q &= q_order1 | q_order2
 
     marriage_date, variance = _get_date_and_variance(filters, "marriage_date")
 
@@ -210,18 +241,22 @@ def marriage_search(filters: dict, fuzzy: bool = False):
 
     return Marriage.objects.filter(q).distinct()
 
+
 def get_marriage_by_person(person):
-    marriage = Marriage.objects.filter(spouse1 = person)
-
-    if marriage:
-        return marriage
-    
-    marriage = Marriage.objects.filter(spouse2 = person)
+    marriage = Marriage.objects.filter(spouse1=person)
 
     if marriage:
         return marriage
 
-def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, prefix: str = "person__"):
+    marriage = Marriage.objects.filter(spouse2=person)
+
+    if marriage:
+        return marriage
+
+
+def _fuzzy_person_search(
+    first_name: str, middle_name: str, last_name: str, prefix: str = "person__"
+):
     with connection.cursor() as cursor:
         cursor.execute("SET pg_trgm.similarity_threshold = .3;")
 
@@ -236,6 +271,7 @@ def _fuzzy_person_search(first_name: str, middle_name: str, last_name: str, pref
 
     return q
 
+
 def narrow_down(query: str, objects):
     if not query:
         return objects
@@ -244,7 +280,6 @@ def narrow_down(query: str, objects):
     q = Q()
 
     for field in model._meta.get_fields():
-
         # Direct text fields
         if isinstance(field, (CharField, TextField, DateField)):
             q |= Q(**{f"{field.name}__icontains": query})
@@ -254,21 +289,6 @@ def narrow_down(query: str, objects):
             rel_model = field.related_model
             for rel_field in rel_model._meta.get_fields():
                 if rel_field.concrete and isinstance(rel_field, (CharField, TextField)):
-                    q |= Q(**{
-                        f"{field.name}__{rel_field.name}__icontains": query
-                    })
+                    q |= Q(**{f"{field.name}__{rel_field.name}__icontains": query})
 
     return objects.filter(q).distinct()
-
-def get_marriage_by_person(person):
-    marriage = Marriage.objects.filter(spouse1=person)
-
-    if marriage:
-        return marriage
-    
-    marriage = Marriage.objects.filter(spouse2=person)
-
-    if marriage:
-        return marriage
-
-    return None

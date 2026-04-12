@@ -1,22 +1,20 @@
 import csv
 import json
-from pathlib import Path
+
 from django.conf import settings
 
+
 def load_county_choices():
-    #csv_path = "../data/counties.csv"
+    # csv_path = "../data/counties.csv"
     csv_path = settings.BASE_DIR / "data" / "counties.csv"
 
     with open(csv_path, encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        return [
-            (row["county_code"], row["county"])
-            for row in reader
-        ]
-    
+        return [(row["county_code"], row["county"]) for row in reader]
+
 
 def load_city_choices():
-    #csv_path = "../data/cities.csv"
+    # csv_path = "../data/cities.csv"
     csv_path = settings.BASE_DIR / "data" / "cities.csv"
 
     county_map = {}
@@ -30,12 +28,13 @@ def load_city_choices():
 
     return county_map
 
+
 def load_mock_data():
-    #json_path = "../data/mock/family_tree.json"
+    # json_path = "../data/mock/family_tree.json"
     json_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
 
-    with open(json_path, 'r') as f:
+    with open(json_path, "r") as f:
         data = json.load(f)
-    
+
     meta, people, marriages = data["meta"], data["people"], data["marriages"]
     return meta, people, marriages

@@ -1,12 +1,19 @@
-from django.test import TestCase, TransactionTestCase
-from django.core.management import call_command
 from datetime import date
-from records.search.record_search import birth_search, death_search, marriage_search, narrow_down
+
+from django.core.management import call_command
+from django.test import TestCase
+
 from records.comment_utils import add_comment
-from records.models import Person, Birth, Death, Marriage, Sex, County, City
+from records.models import Birth, City, County, Death, Marriage, Person, Sex
+from records.search.record_search import (
+    birth_search,
+    death_search,
+    marriage_search,
+    narrow_down,
+)
+
 
 class GenealogyDataTest(TestCase):
-
     def test_parent_child_relationships(self):
         for person in Person.objects.all():
             # If person has a mother/father, ensure child appears in their children
@@ -46,8 +53,17 @@ class GenealogyDataTest(TestCase):
             # Marriage date should exist
             self.assertIsNotNone(marriage.marriage_date)
             # Marriage should appear in spouses' reverse relations
-            self.assertIn(marriage, marriage.spouse1.marriages_as_spouse1.all() | marriage.spouse1.marriages_as_spouse2.all())
-            self.assertIn(marriage, marriage.spouse2.marriages_as_spouse1.all() | marriage.spouse2.marriages_as_spouse2.all())
+            self.assertIn(
+                marriage,
+                marriage.spouse1.marriages_as_spouse1.all()
+                | marriage.spouse1.marriages_as_spouse2.all(),
+            )
+            self.assertIn(
+                marriage,
+                marriage.spouse2.marriages_as_spouse1.all()
+                | marriage.spouse2.marriages_as_spouse2.all(),
+            )
+
 
 class MockDataIntegrityTest(TestCase):
     """
@@ -55,65 +71,98 @@ class MockDataIntegrityTest(TestCase):
     """
 
     def test_counties_have_unique_codes(self):
-        codes = County.objects.values_list('county_code', flat=True)
+        codes = County.objects.values_list("county_code", flat=True)
         self.assertEqual(len(codes), len(set(codes)), "Duplicate county codes found!")
 
     def test_cities_have_county(self):
         for city in City.objects.all():
-            self.assertIsNotNone(city.county, f"City '{city.city_name}' has no county set!")
+            self.assertIsNotNone(
+                city.county, f"City '{city.city_name}' has no county set!"
+            )
 
     def test_person_has_valid_sex(self):
         for person in Person.objects.all():
-            self.assertIn(person.sex, [Sex.MALE, Sex.FEMALE, Sex.UNKNOWN], 
-                        f"Person '{person}' has invalid sex '{person.sex}'")
+            self.assertIn(
+                person.sex,
+                [Sex.MALE, Sex.FEMALE, Sex.UNKNOWN],
+                f"Person '{person}' has invalid sex '{person.sex}'",
+            )
 
     def test_births_and_deaths_link_to_person_and_county(self):
         for birth in Birth.objects.all():
             self.assertIsNotNone(birth.person, "Birth without a person")
-            self.assertIsNotNone(birth.birth_county, f"Birth for {birth.person} has no county")
-            self.assertIsNotNone(birth.birth_city, f"Birth for {birth.person} has no city")
-        
+            self.assertIsNotNone(
+                birth.birth_county, f"Birth for {birth.person} has no county"
+            )
+            self.assertIsNotNone(
+                birth.birth_city, f"Birth for {birth.person} has no city"
+            )
+
         for death in Death.objects.all():
             self.assertIsNotNone(death.person, "Death without a person")
-            self.assertIsNotNone(death.death_county, f"Death for {death.person} has no county")
-            self.assertIsNotNone(death.death_city, f"Death for {death.person} has no city")
+            self.assertIsNotNone(
+                death.death_county, f"Death for {death.person} has no county"
+            )
+            self.assertIsNotNone(
+                death.death_city, f"Death for {death.person} has no city"
+            )
 
     def test_parent_child_consistency(self):
         for person in Person.objects.all():
             if person.mother:
-                self.assertIn(person, person.mother.children(), 
-                            f"{person} not listed as child of mother {person.mother}")
+                self.assertIn(
+                    person,
+                    person.mother.children(),
+                    f"{person} not listed as child of mother {person.mother}",
+                )
             if person.father:
-                self.assertIn(person, person.father.children(), 
-                            f"{person} not listed as child of father {person.father}")
+                self.assertIn(
+                    person,
+                    person.father.children(),
+                    f"{person} not listed as child of father {person.father}",
+                )
 
     def test_sibling_consistency(self):
         for person in Person.objects.all():
             for sibling in person.siblings():
                 # Sibling should share at least one parent
-                shared_parent = (person.mother and person.mother == sibling.mother) or \
-                                (person.father and person.father == sibling.father)
-                self.assertTrue(shared_parent, 
-                                f"{person} and {sibling} reported as siblings but share no parent")
+                shared_parent = (person.mother and person.mother == sibling.mother) or (
+                    person.father and person.father == sibling.father
+                )
+                self.assertTrue(
+                    shared_parent,
+                    f"{person} and {sibling} reported as siblings but share no parent",
+                )
 
     def test_marriages_validity(self):
         for marriage in Marriage.objects.all():
-            self.assertNotEqual(marriage.spouse1, marriage.spouse2,
-                                f"Marriage has same person as both spouses: {marriage.spouse1}")
-            self.assertIsNotNone(marriage.marriage_county,
-                                f"Marriage between {marriage.spouse1} & {marriage.spouse2} has no county")
-            self.assertIsNotNone(marriage.marriage_city,
-                                f"Marriage between {marriage.spouse1} & {marriage.spouse2} has no city")
+            self.assertNotEqual(
+                marriage.spouse1,
+                marriage.spouse2,
+                f"Marriage has same person as both spouses: {marriage.spouse1}",
+            )
+            self.assertIsNotNone(
+                marriage.marriage_county,
+                f"Marriage between {marriage.spouse1} & {marriage.spouse2} has no county",
+            )
+            self.assertIsNotNone(
+                marriage.marriage_city,
+                f"Marriage between {marriage.spouse1} & {marriage.spouse2} has no city",
+            )
 
     def test_sex_specific_children_methods(self):
         for person in Person.objects.all():
             sons = person.sons()
             daughters = person.daughters()
-            self.assertTrue(all(child.sex == Sex.MALE for child in sons),
-                            f"{person} has a son with wrong sex")
-            self.assertTrue(all(child.sex == Sex.FEMALE for child in daughters),
-                            f"{person} has a daughter with wrong sex")
-            
+            self.assertTrue(
+                all(child.sex == Sex.MALE for child in sons),
+                f"{person} has a son with wrong sex",
+            )
+            self.assertTrue(
+                all(child.sex == Sex.FEMALE for child in daughters),
+                f"{person} has a daughter with wrong sex",
+            )
+
 
 class FamilyStructureTestPopulatedDB(TestCase):
     """
@@ -125,15 +174,18 @@ class FamilyStructureTestPopulatedDB(TestCase):
     @classmethod
     def setUpTestData(cls):
         # Initialize the database tables
-        call_command('init_db', verbosity=0)
+        call_command("init_db", verbosity=0)
+        # Generate the mock family tree JSON required by mock_populate
+        call_command("generate_family", verbosity=0)
         # Populate the database with mock data
-        call_command('mock_populate', verbosity=0)
+        call_command("mock_populate", verbosity=0)
 
     def test_family_line_depth(self):
         """
         Check that some person has a lineage (following mothers or fathers) of at least 6 generations.
         """
-        def get_lineage_depth(person, lineage_attr='mother', depth=0):
+
+        def get_lineage_depth(person, lineage_attr="mother", depth=0):
             parent = getattr(person, lineage_attr)
             if not parent:
                 return depth
@@ -141,14 +193,14 @@ class FamilyStructureTestPopulatedDB(TestCase):
 
         max_depth = 0
         for person in Person.objects.all():
-            depth_mother = get_lineage_depth(person, 'mother')
-            depth_father = get_lineage_depth(person, 'father')
+            depth_mother = get_lineage_depth(person, "mother")
+            depth_father = get_lineage_depth(person, "father")
             max_depth = max(max_depth, depth_mother, depth_father)
 
         self.assertGreaterEqual(
             max_depth,
             6,
-            f"No family line with depth >= 6 found (max depth: {max_depth})"
+            f"No family line with depth >= 6 found (max depth: {max_depth})",
         )
 
     def test_sibling_breadth(self):
@@ -163,8 +215,9 @@ class FamilyStructureTestPopulatedDB(TestCase):
         self.assertGreaterEqual(
             max_siblings,
             3,
-            f"No sibling set with breadth >= 3 found (max breadth: {max_siblings})"
+            f"No sibling set with breadth >= 3 found (max breadth: {max_siblings})",
         )
+
 
 class ParentPresenceTest(TestCase):
     """
@@ -172,17 +225,19 @@ class ParentPresenceTest(TestCase):
     """
 
     def test_people_have_parents(self):
-        people_without_parents = Person.objects.filter(mother__isnull=True, father__isnull=True)
+        people_without_parents = Person.objects.filter(
+            mother__isnull=True, father__isnull=True
+        )
         count = people_without_parents.count()
 
         self.assertEqual(
-            count, 
+            count,
             0,
-            f"{count} person(s) have no mother or father assigned: {[p.id for p in people_without_parents]}"
+            f"{count} person(s) have no mother or father assigned: {[p.id for p in people_without_parents]}",
         )
 
-class SearchTests(TestCase):
 
+class SearchTests(TestCase):
     def setUp(self):
 
         # Location setup
@@ -190,40 +245,30 @@ class SearchTests(TestCase):
         self.city = City.objects.create(county=self.county, city_name="Edwardsville")
 
         # People
-        self.john = Person.objects.create(
-            first_name="John",
-            last_name="Smith"
-        )
+        self.john = Person.objects.create(first_name="John", last_name="Smith")
 
-        self.jane = Person.objects.create(
-            first_name="Jane",
-            last_name="Smythe"
-        )
+        self.jane = Person.objects.create(first_name="Jane", last_name="Smythe")
 
-        self.bob = Person.objects.create(
-            first_name="Robert",
-            last_name="Johnson"
-        )
+        self.bob = Person.objects.create(first_name="Robert", last_name="Johnson")
 
         # Birth records
         self.birth1 = Birth.objects.create(
             person=self.john,
             birth_date=date(1900, 5, 1),
             birth_county=self.county,
-            birth_city=self.city
+            birth_city=self.city,
         )
 
         self.birth2 = Birth.objects.create(
             person=self.jane,
             birth_date=date(1902, 6, 15),
             birth_county=self.county,
-            birth_city=self.city
+            birth_city=self.city,
         )
 
         # Death record
         self.death1 = Death.objects.create(
-            person=self.john,
-            death_date=date(1980, 1, 1)
+            person=self.john, death_date=date(1980, 1, 1)
         )
 
         # Marriage record
@@ -232,7 +277,7 @@ class SearchTests(TestCase):
             spouse2=self.jane,
             marriage_date=date(1925, 7, 20),
             marriage_county=self.county,
-            marriage_city=self.city
+            marriage_city=self.city,
         )
 
     # ---------------------
@@ -253,10 +298,7 @@ class SearchTests(TestCase):
         self.assertEqual(results.count(), 2)
 
     def test_birth_date_variance(self):
-        results = birth_search({
-            "birth_date": "1900",
-            "variance": "2"
-        })
+        results = birth_search({"birth_date": "1900", "variance": "2"})
         self.assertEqual(results.count(), 2)
 
     def test_birth_city_filter(self):
@@ -273,10 +315,7 @@ class SearchTests(TestCase):
         self.assertEqual(results.first().person, self.john)
 
     def test_death_date_variance(self):
-        results = death_search({
-            "death_date": "1980",
-            "variance": "1"
-        })
+        results = death_search({"death_date": "1980", "variance": "1"})
         self.assertEqual(results.count(), 1)
 
     # ---------------------
@@ -292,11 +331,9 @@ class SearchTests(TestCase):
         self.assertEqual(results.count(), 1)
 
     def test_marriage_date_variance(self):
-        results = marriage_search({
-            "marriage_date": "1925",
-            "variance": "1"
-        })
+        results = marriage_search({"marriage_date": "1925", "variance": "1"})
         self.assertEqual(results.count(), 1)
+
 
 class FuzzySearchTest(TestCase):
     def setUp(self):
@@ -305,17 +342,43 @@ class FuzzySearchTest(TestCase):
         self.city = City.objects.create(city_name="Chicago", county=self.county)
 
         # People
-        self.person1 = Person.objects.create(first_name="John", middle_name="Lee", last_name="Smith", sex=Sex.MALE)
-        self.person2 = Person.objects.create(first_name="Jon", middle_name="L", last_name="Smyth", sex=Sex.MALE)
-        self.person3 = Person.objects.create(first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE)
+        self.person1 = Person.objects.create(
+            first_name="John", middle_name="Lee", last_name="Smith", sex=Sex.MALE
+        )
+        self.person2 = Person.objects.create(
+            first_name="Jon", middle_name="L", last_name="Smyth", sex=Sex.MALE
+        )
+        self.person3 = Person.objects.create(
+            first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE
+        )
 
         # Births
-        self.birth1 = Birth.objects.create(person=self.person1, birth_date="1990-05-20", birth_county=self.county, birth_city=self.city)
-        self.birth2 = Birth.objects.create(person=self.person2, birth_date="1991-06-15", birth_county=self.county, birth_city=self.city)
+        self.birth1 = Birth.objects.create(
+            person=self.person1,
+            birth_date="1990-05-20",
+            birth_county=self.county,
+            birth_city=self.city,
+        )
+        self.birth2 = Birth.objects.create(
+            person=self.person2,
+            birth_date="1991-06-15",
+            birth_county=self.county,
+            birth_city=self.city,
+        )
 
         # Deaths
-        self.death1 = Death.objects.create(person=self.person1, death_date="2050-01-10", death_county=self.county, death_city=self.city)
-        self.death2 = Death.objects.create(person=self.person3, death_date="2045-02-19", death_county=self.county, death_city=self.city)
+        self.death1 = Death.objects.create(
+            person=self.person1,
+            death_date="2050-01-10",
+            death_county=self.county,
+            death_city=self.city,
+        )
+        self.death2 = Death.objects.create(
+            person=self.person3,
+            death_date="2045-02-19",
+            death_county=self.county,
+            death_city=self.city,
+        )
 
         # Marriages
         self.marriage1 = Marriage.objects.create(
@@ -323,7 +386,7 @@ class FuzzySearchTest(TestCase):
             spouse2=self.person3,
             marriage_date="2015-06-01",
             marriage_county=self.county,
-            marriage_city=self.city
+            marriage_city=self.city,
         )
 
     def test_birth_filtered_plus_fuzzy(self):
@@ -332,7 +395,7 @@ class FuzzySearchTest(TestCase):
             "middle_name": "Lee",
             "last_name": "Smyth",
             "county_name": "Cook",
-            "city_name": "Chicago"
+            "city_name": "Chicago",
         }
 
         results = birth_search(filters, fuzzy=True)
@@ -345,7 +408,7 @@ class FuzzySearchTest(TestCase):
             "middle_name": "Lee",
             "last_name": "Smitt",
             "county_name": "Cook",
-            "city_name": "Chicago"
+            "city_name": "Chicago",
         }
 
         results = death_search(filters, fuzzy=True)
@@ -361,47 +424,29 @@ class FuzzySearchTest(TestCase):
             "spouse2_middle_name": "Ann",
             "spouse2_last_name": "Miler",
             "county_name": "Cook",
-            "city_name": "Chicago"
+            "city_name": "Chicago",
         }
 
         results = marriage_search(filters, fuzzy=True)
         self.assertIn(self.marriage1, results)
 
-class NarrowDownTest(TestCase):
 
+class NarrowDownTest(TestCase):
     def setUp(self):
         # County & City
-        self.county1 = County.objects.create(
-            county_code=1,
-            county_name="Cook County"
-        )
-        self.county2 = County.objects.create(
-            county_code=2,
-            county_name="Lake County"
-        )
+        self.county1 = County.objects.create(county_code=1, county_name="Cook County")
+        self.county2 = County.objects.create(county_code=2, county_name="Lake County")
 
-        self.city1 = City.objects.create(
-            city_name="Chicago",
-            county=self.county1
-        )
-        self.city2 = City.objects.create(
-            city_name="Waukegan",
-            county=self.county2
-        )
+        self.city1 = City.objects.create(city_name="Chicago", county=self.county1)
+        self.city2 = City.objects.create(city_name="Waukegan", county=self.county2)
 
         # People
         self.person1 = Person.objects.create(
-            first_name="John",
-            middle_name="Lee",
-            last_name="Smith",
-            sex=Sex.MALE
+            first_name="John", middle_name="Lee", last_name="Smith", sex=Sex.MALE
         )
 
         self.person2 = Person.objects.create(
-            first_name="Mary",
-            middle_name="Ann",
-            last_name="Miller",
-            sex=Sex.FEMALE
+            first_name="Mary", middle_name="Ann", last_name="Miller", sex=Sex.FEMALE
         )
 
         # Births
@@ -409,14 +454,14 @@ class NarrowDownTest(TestCase):
             person=self.person1,
             birth_date="1990-05-20",
             birth_county=self.county1,
-            birth_city=self.city1
+            birth_city=self.city1,
         )
 
         self.birth2 = Birth.objects.create(
             person=self.person2,
             birth_date="1992-03-10",
             birth_county=self.county2,
-            birth_city=self.city2
+            birth_city=self.city2,
         )
 
     # -----------------------------------------
@@ -472,16 +517,13 @@ class NarrowDownTest(TestCase):
     # -----------------------------------------
     def test_distinct_prevents_duplicates(self):
         # Create another city with same name to force multi-join possibility
-        city_duplicate = City.objects.create(
-            city_name="Chicago",
-            county=self.county2
-        )
+        city_duplicate = City.objects.create(city_name="Chicago", county=self.county2)
 
         Birth.objects.create(
             person=self.person1,
             birth_date="1995-01-01",
             birth_county=self.county2,
-            birth_city=city_duplicate
+            birth_city=city_duplicate,
         )
 
         qs = Birth.objects.all()
@@ -491,8 +533,8 @@ class NarrowDownTest(TestCase):
         ids = list(narrowed.values_list("id", flat=True))
         self.assertEqual(len(ids), len(set(ids)))
 
-class AddCommentTest(TestCase):
 
+class AddCommentTest(TestCase):
     def setUp(self):
         self.person = Person.objects.create(last_name="Smith", first_name="John")
 
@@ -505,8 +547,7 @@ class AddCommentTest(TestCase):
     def test_add_comment(self):
         add_comment(self.person, self.fields)
 
-class SingleParentTest(TestCase):
 
+class SingleParentTest(TestCase):
     def setUp(self):
         self.person = Person.objects.create(last_name="Dunn", first_name="Ian")
-        

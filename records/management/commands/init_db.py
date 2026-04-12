@@ -1,7 +1,7 @@
-from records.models import County, City
-from records.utils import load_county_choices, load_city_choices
 from django.core.management.base import BaseCommand
 
+from records.models import City, County
+from records.utils import load_city_choices, load_county_choices
 
 
 class Command(BaseCommand):
@@ -13,14 +13,10 @@ class Command(BaseCommand):
 
         for county in counties:
             c_obj, _ = County.objects.get_or_create(
-                county_code=int(county[0]),
-                county_name=county[1]
+                county_code=int(county[0]), county_name=county[1]
             )
 
             for city in cities[county[0]]:
-                City.objects.get_or_create(
-                    county=c_obj,
-                    city_name=city
-                )
-        
+                City.objects.get_or_create(county=c_obj, city_name=city)
+
         self.stdout.write(self.style.SUCCESS("Database initialized successfully"))

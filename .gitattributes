@@ -10,3 +10,4 @@
 *.js text eol=lf
 *.json text eol=lf
 *.env text eol=lf
+*.toml text eolf=lf

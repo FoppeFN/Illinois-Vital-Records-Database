@@ -1,7 +1,8 @@
-from PIL import Image, ImageDraw, ImageFont
 import io
 import os
 import random
+
+from PIL import Image, ImageDraw, ImageFont
 
 
 def _get_font(bold=False, size=18):
@@ -43,11 +44,25 @@ def _draw_header(draw, width, record_type, border_color):
     subtitle_font = _get_font(bold=True, size=18)
 
     y = 60
-    draw.text((width // 2, y), "STATE OF ILLINOIS", fill=border_color, font=title_font, anchor="mm")
+    draw.text(
+        (width // 2, y),
+        "STATE OF ILLINOIS",
+        fill=border_color,
+        font=title_font,
+        anchor="mm",
+    )
     y += 44
-    draw.text((width // 2, y), "DEPARTMENT OF PUBLIC HEALTH", fill=border_color, font=subtitle_font, anchor="mm")
+    draw.text(
+        (width // 2, y),
+        "DEPARTMENT OF PUBLIC HEALTH",
+        fill=border_color,
+        font=subtitle_font,
+        anchor="mm",
+    )
     y += 34
-    draw.text((width // 2, y), record_type, fill=border_color, font=title_font, anchor="mm")
+    draw.text(
+        (width // 2, y), record_type, fill=border_color, font=title_font, anchor="mm"
+    )
     y += 28
     draw.line([45, y, width - 45, y], fill=border_color, width=3)
     draw.line([45, y + 6, width - 45, y + 6], fill=border_color, width=1)
@@ -62,7 +77,12 @@ def _draw_fields(draw, fields, start_y, width, header_color, text_color):
     for label, value in fields:
         draw.text((60, y), label, fill=header_color, font=label_font)
         y += 22
-        draw.text((60, y), str(value) if value else "Unknown", fill=text_color, font=value_font)
+        draw.text(
+            (60, y),
+            str(value) if value else "Unknown",
+            fill=text_color,
+            font=value_font,
+        )
         y += 18
         draw.line([60, y + 4, width - 60, y + 4], fill=(190, 190, 175), width=1)
         y += 18
@@ -74,21 +94,29 @@ def _draw_footer(draw, width, height, border_color, reg_num):
     small_font = _get_font(bold=False, size=11)
     y_bottom = height - 120
     draw.line([45, y_bottom, width - 45, y_bottom], fill=border_color, width=1)
-    draw.text((60, y_bottom + 14), f"File No.: {reg_num}", fill=(90, 90, 90), font=small_font)
+    draw.text(
+        (60, y_bottom + 14), f"File No.: {reg_num}", fill=(90, 90, 90), font=small_font
+    )
     draw.text(
         (width // 2, y_bottom + 14),
         "Registrar's Signature: _______________________",
-        fill=(90, 90, 90), font=small_font, anchor="mm"
+        fill=(90, 90, 90),
+        font=small_font,
+        anchor="mm",
     )
     draw.text(
         (width // 2, y_bottom + 38),
         "This is a true and correct copy of the record on file.",
-        fill=(90, 90, 90), font=small_font, anchor="mm"
+        fill=(90, 90, 90),
+        font=small_font,
+        anchor="mm",
     )
     draw.text(
         (width // 2, y_bottom + 60),
         "Illinois Department of Public Health — Division of Vital Records",
-        fill=(90, 90, 90), font=small_font, anchor="mm"
+        fill=(90, 90, 90),
+        font=small_font,
+        anchor="mm",
     )
 
 
@@ -99,7 +127,7 @@ def generate_birth_certificate_image(person, birth):
     border_color = (0, 80, 70)  # teal
     text_dark = (25, 25, 25)
 
-    img = Image.new('RGB', (width, height), color=bg_color)
+    img = Image.new("RGB", (width, height), color=bg_color)
     draw = ImageDraw.Draw(img)
 
     _draw_certificate_frame(draw, width, height, border_color, bg_color)
@@ -108,10 +136,22 @@ def generate_birth_certificate_image(person, birth):
     name = f"{person.first_name} {person.middle_name or ''} {person.last_name}".strip()
     birth_date = str(birth.birth_date) if birth and birth.birth_date else "Unknown"
     birth_city = str(birth.birth_city) if birth and birth.birth_city else "Unknown"
-    birth_county = (str(birth.birth_county) + " County") if birth and birth.birth_county else "Unknown"
+    birth_county = (
+        (str(birth.birth_county) + " County")
+        if birth and birth.birth_county
+        else "Unknown"
+    )
     sex = person.get_sex_display() if person.sex else "Unknown"
-    mother = f"{person.mother.first_name} {person.mother.last_name}" if person.mother else "Unknown"
-    father = f"{person.father.first_name} {person.father.last_name}" if person.father else "Unknown"
+    mother = (
+        f"{person.mother.first_name} {person.mother.last_name}"
+        if person.mother
+        else "Unknown"
+    )
+    father = (
+        f"{person.father.first_name} {person.father.last_name}"
+        if person.father
+        else "Unknown"
+    )
 
     fields = [
         ("Full Name of Child:", name),
@@ -140,7 +180,7 @@ def generate_death_certificate_image(person, death):
     border_color = (90, 20, 20)  # maroon
     text_dark = (25, 25, 25)
 
-    img = Image.new('RGB', (width, height), color=bg_color)
+    img = Image.new("RGB", (width, height), color=bg_color)
     draw = ImageDraw.Draw(img)
 
     _draw_certificate_frame(draw, width, height, border_color, bg_color)
@@ -149,7 +189,11 @@ def generate_death_certificate_image(person, death):
     name = f"{person.first_name} {person.middle_name or ''} {person.last_name}".strip()
     death_date = str(death.death_date) if death and death.death_date else "Unknown"
     death_city = str(death.death_city) if death and death.death_city else "Unknown"
-    death_county = (str(death.death_county) + " County") if death and death.death_county else "Unknown"
+    death_county = (
+        (str(death.death_county) + " County")
+        if death and death.death_county
+        else "Unknown"
+    )
     sex = person.get_sex_display() if person.sex else "Unknown"
     age = str(death.death_age) if death and death.death_age is not None else "Unknown"
 
@@ -175,7 +219,8 @@ def generate_death_certificate_image(person, death):
 def image_to_content_file(img, filename):
     """Convert a PIL Image to a Django ContentFile for saving to an ImageField."""
     from django.core.files.base import ContentFile
+
     buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
+    img.save(buffer, format="PNG")
     buffer.seek(0)
     return ContentFile(buffer.read(), name=filename)
