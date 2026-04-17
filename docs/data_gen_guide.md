@@ -3,7 +3,7 @@
 ## Generation
 
 1. Open a shell inside the Docker web container using `docker compose exec web bash`
-2. Generate the mock data by running `python manage.py generate_family` inside the shell. This data will be stored in `data/mock/family_tree.json`
+2. *Skip if not using mock records.* Generate the mock data by running `python manage.py generate_family` inside the shell. This data will be stored in `data/mock/family_tree.json`.
 
 #### Parameters (Optional)
 
@@ -25,7 +25,7 @@
 1. Stage initial migrations to the database by running `python manage.py makemigrations` inside the shell.
 2. Finalize migrations to the database by running `python manage.py migrate` inside the shell.
 3. Initialize the database with Illinois counties and some cities by running `python manage.py init_db` inside the shell.
-4. Populate the database with the generated mock data by running `python manage.py mock_populate` inside the shell. This may take a bit depending on given [parameters](parameters-optional).
+4. *Skip if not using mock records.* Populate the database with the generated mock data by running `python manage.py mock_populate` inside the shell. This may take a bit depending on given [parameters](parameters-optional).
 
 ## Errors
 
