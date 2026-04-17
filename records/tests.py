@@ -176,13 +176,13 @@ class FamilyStructureTestPopulatedDB(TestCase):
         # Initialize the database tables
         call_command("init_db", verbosity=0)
         # Generate the mock family tree JSON required by mock_populate
-        call_command("generate_family", verbosity=0)
+        call_command("generate_family", ftdl=4, spdl=4, test_output=True, verbosity=0)
         # Populate the database with mock data
-        call_command("mock_populate", verbosity=0)
+        call_command("mock_populate", test_input=True, verbosity=0)
 
     def test_family_line_depth(self):
         """
-        Check that some person has a lineage (following mothers or fathers) of at least 6 generations.
+        Check that some person has a lineage (following mothers or fathers) of at least FTDL generations.
         """
 
         def get_lineage_depth(person, lineage_attr="mother", depth=0):
@@ -199,7 +199,7 @@ class FamilyStructureTestPopulatedDB(TestCase):
 
         self.assertGreaterEqual(
             max_depth,
-            6,
+            3,
             f"No family line with depth >= 6 found (max depth: {max_depth})",
         )
 

@@ -391,9 +391,36 @@ def save_json(filepath: str, obj: dict):
 # MAIN
 # -----------------------------
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--ftdl",
+            type=int,
+            default=8,
+            help="Family Tree Depth Limit (default: 8)",
+        )
+        parser.add_argument(
+            "--spdl",
+            type=int,
+            default=6,
+            help="Sibling-Partner Depth Limit (default: 6)",
+        )
+        parser.add_argument(
+            "--test-output",
+            action="store_true",
+            help="Write output to test file path",
+        )
+
     help = "Produce mock data"
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **options):
+        global FTDL, SPDL
+
+        # Override defaults if provided
+        if options.get("ftdl") is not None:
+            FTDL = options["ftdl"]
+        if options.get("spdl") is not None:
+            SPDL = options["spdl"]
+
         # Seeds for repeatable output
         np.random.seed(7)
         random.seed(7)
@@ -403,7 +430,6 @@ class Command(BaseCommand):
         root_cluster = generate()
 
         # Wrap output with metadata
-
         for _, info in people.items():
             info["birth_date"] = info["birth_date"].isoformat()
             info["death_date"] = info["death_date"].isoformat()
@@ -427,8 +453,10 @@ class Command(BaseCommand):
         }
 
         # Save JSON
-        # out_path = "../data/mock/family_tree.json"
-        out_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
+        if options.get("test_output"):
+            out_path = settings.BASE_DIR / "data" / "mock" / "family_tree_test.json"
+        else:
+            out_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
         save_json(out_path, output)
 
         print("Wrote:", out_path)

@@ -12,4 +12,6 @@ static/node_modules/
 .DS_Store
 Thumbs.db
 family_tree.json
+family_tree_test.json
 records/migrations/*
+media/*

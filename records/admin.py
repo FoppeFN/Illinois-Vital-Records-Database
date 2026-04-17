@@ -378,6 +378,7 @@ class CommentAdmin(admin.ModelAdmin):
                     "commenter_email",
                     "creation_time",
                     "person",
+                    "comment_content",
                 )
             },
         ),

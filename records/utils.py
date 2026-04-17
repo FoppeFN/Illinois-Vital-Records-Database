@@ -29,9 +29,12 @@ def load_city_choices():
     return county_map
 
 
-def load_mock_data():
+def load_mock_data(testfile=False):
     # json_path = "../data/mock/family_tree.json"
-    json_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
+    if testfile:
+        json_path = settings.BASE_DIR / "data" / "mock" / "family_tree_test.json"
+    else:
+        json_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
 
     with open(json_path, "r") as f:
         data = json.load(f)

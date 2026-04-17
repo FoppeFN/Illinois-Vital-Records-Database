@@ -10,10 +10,17 @@ from records.utils import load_mock_data
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--test-input",
+            action="store_true",
+            help="Use test input file and disable image generation",
+        )
+
     help = "Load mock genealogy data into the database"
 
-    def handle(self, *args, **kwargs):
-        _, people, marriages = load_mock_data()
+    def handle(self, *args, **options):
+        _, people, marriages = load_mock_data(options.get("test_input"))
 
         person_map = {}
         image_count = 0
@@ -67,7 +74,7 @@ class Command(BaseCommand):
 
             person.save()
 
-            if image_count < 100:
+            if image_count < 100 and not options.get("test_input"):
                 birth_obj = person.birth.first()
                 death_obj = person.death.first()
 
