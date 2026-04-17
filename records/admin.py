@@ -14,6 +14,8 @@ ext_color = "darkorange"
 
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["mother", "father"]
+
     search_fields = ["id", "last_name", "first_name", "middle_name"]
 
     readonly_fields = (
@@ -100,6 +102,8 @@ class PersonAdmin(admin.ModelAdmin):
 
 @admin.register(Birth)
 class BirthAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["person"]
+
     search_fields = [
         "person__last_name",
         "person__first_name",
@@ -168,6 +172,8 @@ class BirthAdmin(admin.ModelAdmin):
 
 @admin.register(Death)
 class DeathAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["person"]
+
     search_fields = [
         "person__last_name",
         "person__first_name",
@@ -236,6 +242,8 @@ class DeathAdmin(admin.ModelAdmin):
 
 @admin.register(Marriage)
 class MarriageAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["spouse1", "spouse2"]
+
     search_fields = [
         "spouse1__last_name",
         "spouse1__first_name",
@@ -311,6 +319,8 @@ class CountyAdmin(admin.ModelAdmin):
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["county"]
+
     search_fields = ["county__county_code", "county__county_name", "city_name"]
 
     list_display = ["id", "city_name", "county_name", "county_code"]
@@ -338,6 +348,8 @@ class CityAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["person"]
+
     class Media:
         js = (
             "https://unpkg.com/htmx.org@1.9.12",
