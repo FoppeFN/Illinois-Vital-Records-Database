@@ -2,7 +2,7 @@
 
 # First Time Docker Initialization
 
-1. Create .env file (in discord)
+1. Create .env file
 2. Run using command:  docker compose up --build
 3. Visit localhost:8000, Django should say its working if you got it installed correctly.
 
