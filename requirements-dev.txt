@@ -1,0 +1,8 @@
+-r requirements.txt
+pytest
+pytest-django
+coverage
+flake8
+mypy
+bandit
+ruff

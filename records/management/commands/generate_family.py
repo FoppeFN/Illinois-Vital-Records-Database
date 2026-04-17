@@ -1,22 +1,22 @@
-from faker import Faker
-import numpy as np
-import random
 import json
-import csv
-import os
-from records.utils import load_county_choices, load_city_choices
-from pathlib import Path
+import random
 from datetime import date, timedelta
+from pathlib import Path
+
+import numpy as np
 from dateutil.relativedelta import relativedelta
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.core.management.base import BaseCommand
+from faker import Faker
+
+from records.utils import load_city_choices, load_county_choices
 
 fake = Faker()
 
 # -----------------------------
 # CONFIG
 # -----------------------------
-PCP = 0.69                 # Partnered-with-children probability
+PCP = 0.69  # Partnered-with-children probability
 CD_MEAN, CD_SD = 2.0, 1.5  # Child distribution (Normal)
 MAX_CHILDREN = 10
 
@@ -30,9 +30,9 @@ SPDL = 6                   # Sibling-Partner Depth Limit
 # -----------------------------
 # GLOBAL STATE
 # -----------------------------
-people = {}        # person_id -> dict
+people = {}  # person_id -> dict
 _id = 0
-counties = load_county_choices()      # list of {"county_code": "...", "county": "..."}
+counties = load_county_choices()  # list of {"county_code": "...", "county": "..."}
 cities = load_city_choices()
 marriages = []
 marriage_set = set()
@@ -64,7 +64,6 @@ fake.date_between(
 """
 
 
-
 # -----------------------------
 # HELPERS
 # -----------------------------
@@ -76,7 +75,7 @@ def new_id():
 
 def pick_death_date(birth_date, age):
     start = birth_date + relativedelta(years=age)
-    end = birth_date + relativedelta(years = age + 1) - timedelta(days = 1)
+    end = birth_date + relativedelta(years=age + 1) - timedelta(days=1)
     return fake.date_between(start_date=start, end_date=end)
 
 
@@ -132,21 +131,25 @@ def marry(p1, p2):
     marriage_city = pick_city(marriage_county)
     marriage_date = pick_marriage_date(people[p1]["birth_date"]).isoformat()
 
-    if people[p1]["sex"] == "F": people[p1]["last"] = people[p2]["last"]
-    if people[p2]["sex"] == "F": people[p2]["last"] = people[p1]["last"]
+    if people[p1]["sex"] == "F":
+        people[p1]["last"] = people[p2]["last"]
+    if people[p2]["sex"] == "F":
+        people[p2]["last"] = people[p1]["last"]
 
     if marriage_id not in marriage_set:
         marriage_set.add(marriage_id)
-        marriages.append({
-            "spouse1": p1,
-            "spouse2": p2,
-            "marriage_county": marriage_county,
-            "marriage_city": marriage_city,
-            "marriage_date": marriage_date
-        })
+        marriages.append(
+            {
+                "spouse1": p1,
+                "spouse2": p2,
+                "marriage_county": marriage_county,
+                "marriage_city": marriage_city,
+                "marriage_date": marriage_date,
+            }
+        )
         people[p1]["is_married"] = True
         people[p2]["is_married"] = True
-    
+
 
 # -----------------------------
 # PERSON + FAMILY CREATION
@@ -197,32 +200,22 @@ def make_person(sex=None, last=None, birth_seed=birth_date_seed, age_offset=0):
         "middle": middle,
         "last": last,
         "sex": sex,
-
         # birth county info from CSV
-        
         "birth_county_code": birth_county[0],
         "birth_county": birth_county[1],
         "birth_city": birth_city,
-
-         
         "death_county_code": death_county[0],
         "death_county": death_county[1],
         "death_city": death_city,
-
-
         # dates
-
         "birth_date": birth_date,
         "death_date": death_date,
         "age": age,
-
-        #marriage
+        # marriage
         "is_married": False,
-
         # parents
         "mother": None,
         "father": None,
-
         # children
         "children": [],
     }
@@ -265,8 +258,10 @@ def make_sibling_cluster(person):
     sibling_cluster = [person]
 
     for _ in range(sibling_count):
-        sibling_cluster.append(make_person(last=person_info["last"], birth_seed=person_info["birth_date"]))
-    
+        sibling_cluster.append(
+            make_person(last=person_info["last"], birth_seed=person_info["birth_date"])
+        )
+
     return sibling_cluster
 
 
@@ -278,7 +273,7 @@ def expand_from_cluster(cluster, depth, sp_depth):
 
     if depth >= FTDL:
         return
-    
+
     if len(cluster) < 1:
         return
 
@@ -288,7 +283,12 @@ def expand_from_cluster(cluster, depth, sp_depth):
     birth_seed = people[rand_child]["birth_date"]
 
     mom = make_person(sex="F", birth_seed=birth_seed, age_offset=old_offset)
-    dad = make_person(sex="M", birth_seed=birth_seed, age_offset=old_offset, last=people[rand_child]["last"])
+    dad = make_person(
+        sex="M",
+        birth_seed=birth_seed,
+        age_offset=old_offset,
+        last=people[rand_child]["last"],
+    )
     marry(mom, dad)
 
     # Attach these parents to every child in the cluster
@@ -425,15 +425,15 @@ class Command(BaseCommand):
                 "total_people": len(people),
             },
             "people": people,
-            "marriages": marriages
+            "marriages": marriages,
         }
 
         # Save JSON
-        #out_path = "../data/mock/family_tree.json"
+        # out_path = "../data/mock/family_tree.json"
         out_path = settings.BASE_DIR / "data" / "mock" / "family_tree.json"
         save_json(out_path, output)
 
         print("Wrote:", out_path)
         print("Total people:", len(people))
-    
+
         self.stdout.write(self.style.SUCCESS("Mock data created successfully"))
