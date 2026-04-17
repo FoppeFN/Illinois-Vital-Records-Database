@@ -20,6 +20,7 @@ The application is built using Django and emphasizes relational data modeling, f
 * 🗺️ Location-based filtering (county, city)
 * 📝 Comment system (admin-moderated)
 * ⚙️ Full Django admin interface with enhanced navigation
+* 💾 Exportation of records (`CSV`, `PDF`)
 
 ---
 
