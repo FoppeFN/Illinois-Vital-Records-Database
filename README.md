@@ -359,7 +359,7 @@ Spouse ordering is enforced to prevent duplicate entries for the same pair.
 ### Clone the Project Locally
 
 ```
-git clone https://github.com/FoppeFN/Illinois-Vitality-Archive/tree/main
+git clone https://github.com/FoppeFN/Illinois-Vitality-Archive.git
 cd project
 ```
 
