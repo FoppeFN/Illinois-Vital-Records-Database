@@ -25,7 +25,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         test_mode = options.get("test_input", False)
 
-        # Redirect media output in test mode
         original_media_root = settings.MEDIA_ROOT
 
         if test_mode:
@@ -38,7 +37,6 @@ class Command(BaseCommand):
             person_map = {}
             image_count = 0
 
-            # --- Create people + related records ---
             for pid, pdata in people.items():
                 if pdata["sex"] == "M":
                     sex = Sex.MALE
@@ -54,11 +52,21 @@ class Command(BaseCommand):
                     sex=sex,
                 )
 
-                b_county = County.objects.get(county_code=pdata["birth_county_code"])
-                b_city = City.objects.get(county=b_county, city_name=pdata["birth_city"])
+                b_county = County.objects.get(
+                    county_code=pdata["birth_county_code"]
+                )
+                b_city = City.objects.get(
+                    county=b_county,
+                    city_name=pdata["birth_city"],
+                )
 
-                d_county = County.objects.get(county_code=pdata["death_county_code"])
-                d_city = City.objects.get(county=d_county, city_name=pdata["death_city"])
+                d_county = County.objects.get(
+                    county_code=pdata["death_county_code"]
+                )
+                d_city = City.objects.get(
+                    county=d_county,
+                    city_name=pdata["death_city"],
+                )
 
                 Birth.objects.create(
                     person=person,
@@ -77,12 +85,8 @@ class Command(BaseCommand):
 
                 person_map[pid] = person
 
-            if test_mode:
-                max_images = 1
-            else:
-                max_images = 100
+            max_images = 1 if test_mode else 100
 
-            # --- Set family relations + generate images ---
             for pid, pdata in people.items():
                 person = person_map[pid]
 
@@ -101,25 +105,32 @@ class Command(BaseCommand):
                     birth_img = generate_birth_certificate_image(person, birth_obj)
                     birth_obj.birth_record_image.save(
                         f"birth_{person.id}.png",
-                        image_to_content_file(birth_img, f"birth_{person.id}.png"),
+                        image_to_content_file(
+                            birth_img, f"birth_{person.id}.png"
+                        ),
                         save=True,
                     )
 
-                    death_img = generate_death_certificate_image(person, death_obj)
+                    death_img = generate_death_certificate_image(
+                        person, death_obj
+                    )
                     death_obj.death_record_image.save(
                         f"death_{person.id}.png",
-                        image_to_content_file(death_img, f"death_{person.id}.png"),
+                        image_to_content_file(
+                            death_img, f"death_{person.id}.png"
+                        ),
                         save=True,
                     )
 
                     image_count += 1
 
-            # --- Marriages ---
             for marriage in marriages:
-                m_county = County.objects.get(county_code=marriage["marriage_county"][0])
+                m_county = County.objects.get(
+                    county_code=marriage["marriage_county"][0]
+                )
                 m_city = City.objects.get(
                     county=m_county,
-                    city_name=marriage["marriage_city"]
+                    city_name=marriage["marriage_city"],
                 )
 
                 Marriage.objects.create(
@@ -131,9 +142,10 @@ class Command(BaseCommand):
                 )
 
             self.stdout.write(
-                self.style.SUCCESS("Database populated with mock data successfully")
+                self.style.SUCCESS(
+                    "Database populated with mock data successfully"
+                )
             )
 
         finally:
-            # Always restore original media root
             settings.MEDIA_ROOT = original_media_root
