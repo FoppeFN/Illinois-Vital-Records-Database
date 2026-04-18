@@ -218,7 +218,7 @@ def export_csv(request, person_id):
     writer.writerow(
         [
             "Children",
-            ", ".join(f"{c.firsst_name} {c.last_name}" for c in children)
+            ", ".join(f"{c.first_name} {c.last_name}" for c in children)
             if children
             else "N/A",
         ]
