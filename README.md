@@ -422,7 +422,7 @@ Other useful information can be found in the [docs/](docs/) folder.
 
 ## Authors
 
-- Sponsor: Mera Kachgal `mkachgal1@proton.me`
+- Sponsor: Mera Kachgal
 - Team:
     - Zachariah Brincken
     - Ian Dunn
